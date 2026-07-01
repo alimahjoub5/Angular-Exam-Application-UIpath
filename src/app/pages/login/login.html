@@ -1,0 +1,192 @@
+<div class="login-container">
+  <div class="login-card">
+    <!-- Header -->
+    <div class="login-header">
+      <div class="logo-section">
+        <span class="logo-icon">🤖</span>
+        <h1>UiPath Academy</h1>
+      </div>
+      <p class="subtitle">Master Robotic Process Automation</p>
+    </div>
+
+    <!-- Forms -->
+    <div class="form-container">
+      <!-- Login Form -->
+      <div *ngIf="!isSignUp()" class="form-wrapper">
+        <h2>Welcome Back</h2>
+        <p class="form-subtitle">Sign in to your account</p>
+
+        <!-- Error Message -->
+        <div *ngIf="errorMessage()" class="error-message">
+          <span class="error-icon">⚠️</span>
+          {{ errorMessage() }}
+        </div>
+
+        <!-- Email Input -->
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="Enter your email"
+            [(ngModel)]="email"
+            [disabled]="isLoading()"
+          />
+        </div>
+
+        <!-- Password Input -->
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-wrapper">
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              id="password"
+              placeholder="Enter your password"
+              [(ngModel)]="password"
+              [disabled]="isLoading()"
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="togglePasswordVisibility()"
+              [disabled]="isLoading()"
+            >
+              {{ showPassword() ? '👁️' : '👁️‍🗨️' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Login Button -->
+        <button
+          class="btn btn-primary"
+          (click)="onLogin()"
+          [disabled]="isLoading()"
+        >
+          <span *ngIf="!isLoading()">Sign In</span>
+          <span *ngIf="isLoading()">
+            <span class="spinner"></span> Signing in...
+          </span>
+        </button>
+
+        <!-- Demo Credentials -->
+        <div class="demo-section">
+          <p class="demo-label">Demo Credentials:</p>
+          <div class="demo-buttons">
+            <button
+              type="button"
+              class="demo-btn"
+              (click)="fillDemoCredentials('student')"
+              [disabled]="isLoading()"
+            >
+              👨‍🎓 Student
+            </button>
+            <button
+              type="button"
+              class="demo-btn"
+              (click)="fillDemoCredentials('instructor')"
+              [disabled]="isLoading()"
+            >
+              👩‍🏫 Instructor
+            </button>
+          </div>
+        </div>
+
+        <!-- Sign Up Link -->
+        <p class="toggle-form">
+          Don't have an account?
+          <button type="button" (click)="toggleSignUp()" class="link-btn">
+            Create one
+          </button>
+        </p>
+      </div>
+
+      <!-- Sign Up Form -->
+      <div *ngIf="isSignUp()" class="form-wrapper">
+        <h2>Create Account</h2>
+        <p class="form-subtitle">Join our learning community</p>
+
+        <!-- Error Message -->
+        <div *ngIf="errorMessage()" class="error-message">
+          <span class="error-icon">⚠️</span>
+          {{ errorMessage() }}
+        </div>
+
+        <!-- Name Input -->
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input
+            type="text"
+            id="name"
+            placeholder="Enter your full name"
+            [(ngModel)]="signUpName"
+            [disabled]="isLoading()"
+          />
+        </div>
+
+        <!-- Email Input -->
+        <div class="form-group">
+          <label for="signup-email">Email Address</label>
+          <input
+            type="email"
+            id="signup-email"
+            placeholder="Enter your email"
+            [(ngModel)]="email"
+            [disabled]="isLoading()"
+          />
+        </div>
+
+        <!-- Password Input -->
+        <div class="form-group">
+          <label for="signup-password">Password</label>
+          <div class="password-wrapper">
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              id="signup-password"
+              placeholder="Min. 6 characters"
+              [(ngModel)]="password"
+              [disabled]="isLoading()"
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="togglePasswordVisibility()"
+              [disabled]="isLoading()"
+            >
+              {{ showPassword() ? '👁️' : '👁️‍🗨️' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Sign Up Button -->
+        <button
+          class="btn btn-primary"
+          (click)="onSignUp()"
+          [disabled]="isLoading()"
+        >
+          <span *ngIf="!isLoading()">Create Account</span>
+          <span *ngIf="isLoading()">
+            <span class="spinner"></span> Creating...
+          </span>
+        </button>
+
+        <!-- Sign In Link -->
+        <p class="toggle-form">
+          Already have an account?
+          <button type="button" (click)="toggleSignUp()" class="link-btn">
+            Sign in
+          </button>
+        </p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="login-footer">
+      <p>By signing in, you agree to our Terms of Service and Privacy Policy</p>
+    </div>
+  </div>
+
+  <!-- Left Decoration -->
+  <div class="decoration decoration-left"></div>
+  <!-- Right Decoration -->
+  <div class="decoration decoration-right"></div>
+</div>

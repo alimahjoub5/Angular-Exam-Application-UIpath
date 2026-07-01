@@ -1,0 +1,145 @@
+<div class="welcome-container">
+  <!-- Header Navigation -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <span class="logo-icon">🤖</span>
+        <span class="logo-text">UiPath Academy</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#courses" class="nav-link">Courses</a>
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#" class="nav-link">About</a>
+        <a routerLink="/login" class="nav-btn login">Sign In</a>
+        <a routerLink="/login" class="nav-btn signup">Get Started</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">Master Robotic Process Automation</h1>
+      <p class="hero-subtitle">
+        Learn UiPath from industry experts. Build powerful automation solutions and advance your career.
+      </p>
+      <div class="hero-buttons">
+        <a routerLink="/login" class="btn btn-primary">Start Learning Now</a>
+        <button class="btn btn-secondary">Watch Demo</button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-number">50K+</span>
+          <span class="stat-label">Students</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">100+</span>
+          <span class="stat-label">Lessons</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">4.9★</span>
+          <span class="stat-label">Rating</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-shape"></div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <div class="section-header">
+      <h2>Why Learn With Us?</h2>
+      <p>Everything you need to become a UiPath expert</p>
+    </div>
+    <div class="features-grid">
+      <div *ngFor="let feature of features" class="feature-card">
+        <div class="feature-icon">{{ feature.icon }}</div>
+        <h3>{{ feature.title }}</h3>
+        <p>{{ feature.description }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Courses Section -->
+  <section class="courses" id="courses">
+    <div class="section-header">
+      <h2>Popular Courses</h2>
+      <p>Choose your learning path</p>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoadingCourses()" class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading courses...</p>
+    </div>
+
+    <!-- Courses Grid -->
+    <div *ngIf="!isLoadingCourses()" class="courses-grid">
+      <div
+        *ngFor="let course of courses()"
+        class="course-card"
+        [ngClass]="'course-' + course.color"
+      >
+        <div class="course-header">
+          <span class="course-level">{{ course.level }}</span>
+          <span class="course-badge">{{ course.students }} students</span>
+        </div>
+        <h3>{{ course.title }}</h3>
+        <p class="course-description">{{ course.description }}</p>
+        <div class="course-meta">
+          <span class="course-duration">⏱️ {{ course.duration }}</span>
+          <span class="course-rating">⭐ {{ course.rating }}</span>
+        </div>
+        <div class="course-skills">
+          <span *ngFor="let skill of course.skills.slice(0, 2)" class="skill-tag">
+            {{ skill }}
+          </span>
+          <span *ngIf="course.skills.length > 2" class="skill-tag">
+            +{{ course.skills.length - 2 }}
+          </span>
+        </div>
+        <button class="course-btn" routerLink="/login">Explore Course</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta">
+    <div class="cta-content">
+      <h2>Ready to Start Your Automation Journey?</h2>
+      <p>Join thousands of professionals who've transformed their careers with UiPath</p>
+      <button class="btn btn-large">Enroll Now - It's Free!</button>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>UiPath Academy</h4>
+        <p>Learn RPA with the industry leader</p>
+      </div>
+      <div class="footer-section">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="#">Courses</a></li>
+          <li><a href="#">Documentation</a></li>
+          <li><a href="#">Community</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Follow Us</h4>
+        <ul>
+          <li><a href="#">Twitter</a></li>
+          <li><a href="#">LinkedIn</a></li>
+          <li><a href="#">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2024 UiPath Academy. All rights reserved.</p>
+    </div>
+  </footer>
+</div>

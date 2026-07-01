@@ -1,0 +1,431 @@
+<div class="exam-container">
+  <!-- Exam Selection Screen -->
+  <div *ngIf="!examSelected() && !isStarted() && !quizCompleted()" class="selection-screen">
+    <div class="selection-card">
+      <div class="selection-header">
+        <span class="selection-icon">🎯</span>
+        <h1>Choose Your Exam</h1>
+        <p>Select the type of exam you want to take</p>
+      </div>
+
+      <div class="exam-options">
+        <!-- Small Exam Option -->
+        <div class="exam-option" (click)="selectExamType('small')">
+          <div class="option-header">
+            <span class="option-icon">📋</span>
+            <h2>Small Exam</h2>
+          </div>
+          <div class="option-details">
+            <div class="detail-item">
+              <span class="detail-icon">❓</span>
+              <div>
+                <span class="detail-label">Questions</span>
+                <span class="detail-value">10</span>
+              </div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-icon">⏱️</span>
+              <div>
+                <span class="detail-label">Duration</span>
+                <span class="detail-value">30 Minutes</span>
+              </div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-icon">✅</span>
+              <div>
+                <span class="detail-label">Pass Score</span>
+                <span class="detail-value">70%</span>
+              </div>
+            </div>
+          </div>
+          <p class="option-description">Perfect for quick practice and self-assessment</p>
+          <button class="btn btn-primary btn-block">Start Small Exam</button>
+        </div>
+
+        <!-- Real Exam Option -->
+        <div class="exam-option featured" (click)="selectExamType('real')">
+          <div class="featured-badge">Official Exam</div>
+          <div class="option-header">
+            <span class="option-icon">🏆</span>
+            <h2>Real Exam</h2>
+          </div>
+          <div class="option-details">
+            <div class="detail-item">
+              <span class="detail-icon">❓</span>
+              <div>
+                <span class="detail-label">Questions</span>
+                <span class="detail-value">60</span>
+              </div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-icon">⏱️</span>
+              <div>
+                <span class="detail-label">Duration</span>
+                <span class="detail-value">90 Minutes</span>
+              </div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-icon">✅</span>
+              <div>
+                <span class="detail-label">Pass Score</span>
+                <span class="detail-value">70%</span>
+              </div>
+            </div>
+          </div>
+          <p class="option-description">Full certification exam with comprehensive coverage</p>
+          <button class="btn btn-primary btn-block">Start Real Exam</button>
+        </div>
+      </div>
+
+      <div class="selection-footer">
+        <button class="btn btn-secondary" (click)="goToDashboard()">
+          Back to Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start Screen -->
+  <div *ngIf="examSelected() && !isStarted() && !quizCompleted()" class="start-screen">
+    <div class="start-card">
+      <div class="exam-header">
+        <span class="exam-icon">📝</span>
+        <h1>UiPath Certification Exam</h1>
+        <p>Test your knowledge and prepare for success</p>
+      </div>
+
+      <div class="exam-info">
+        <div class="info-item">
+          <span class="icon">❓</span>
+          <div>
+            <h3>{{ selectedExamType() === 'small' ? '10 Questions' : '60 Questions' }}</h3>
+            <p>{{ selectedExamType() === 'small' ? 'Multiple choice questions' : 'Comprehensive exam covering all topics' }}</p>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="icon">⏱️</span>
+          <div>
+            <h3>{{ selectedExamType() === 'small' ? '30 Minutes' : '90 Minutes' }}</h3>
+            <p>{{ selectedExamType() === 'small' ? 'Quick assessment' : 'Full certification exam' }}</p>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="icon">✅</span>
+          <div>
+            <h3>70% to Pass</h3>
+            <p>You need 70% correct to pass the exam</p>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="icon">📊</span>
+          <div>
+            <h3>Instant Results</h3>
+            <p>Get detailed feedback and score breakdown</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="instructions">
+        <h3>Exam Instructions:</h3>
+        <ul>
+          <li>You cannot pause the exam once started</li>
+          <li>All questions must be answered before submission</li>
+          <li>Your answers are auto-saved as you select them</li>
+          <li>You can review and change your answers before submitting</li>
+          <li>The exam will auto-submit when time expires</li>
+        </ul>
+      </div>
+
+      <button class="btn btn-primary btn-large" (click)="startQuiz()">
+        Start {{ selectedExamType() === 'small' ? 'Small Exam' : 'Real Exam' }}
+      </button>
+      <button class="btn btn-secondary btn-large" (click)="selectedExamType.set(null); examSelected.set(false)">
+        Back to Exam Selection
+      </button>
+    </div>
+  </div>
+
+  <!-- Quiz Screen -->
+  <div *ngIf="isStarted() && !quizCompleted()" class="quiz-screen">
+    <!-- Anti-Cheating Banner -->
+    <div class="anti-cheat-banner">
+      <span class="banner-icon">🔒</span>
+      <span class="banner-text">Anti-cheating protection active • Stay in this window • Full screen required</span>
+    </div>
+    <!-- Header -->
+    <div class="quiz-header">
+      <div class="header-left">
+        <h2>Question {{ currentQuestion() + 1 }} of {{ questions().length }}</h2>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="((currentQuestion() + 1) / questions().length) * 100"></div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="timer" [ngClass]="timeRemaining() < 300 ? 'warning' : ''">
+          <span class="timer-icon">⏱️</span>
+          <span class="timer-text">{{ formatTime(timeRemaining()) }}</span>
+        </div>
+        <button class="btn btn-exit" (click)="exitExam()" title="Exit Exam">
+          <span class="exit-icon">✕</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="quiz-content">
+      <!-- Question Panel -->
+      <div class="question-panel">
+        <div class="question-card">
+          <h3 class="question-text">
+            {{ questions()[currentQuestion()]?.question }}
+          </h3>
+          <div class="difficulty-badge" [ngClass]="'difficulty-' + questions()[currentQuestion()]?.difficulty.toLowerCase()">
+            {{ questions()[currentQuestion()]?.difficulty }}
+          </div>
+
+          <div class="options">
+            <label
+              *ngFor="let option of questions()[currentQuestion()]?.options; let i = index"
+              class="option"
+              [ngClass]="{
+                'selected': selectedAnswers()[currentQuestion()] === i,
+                'locked': isAnswerLocked()
+              }"
+            >
+              <input
+                type="radio"
+                [name]="'question-' + currentQuestion()"
+                [value]="i"
+                (change)="selectAnswer(i)"
+                [checked]="selectedAnswers()[currentQuestion()] === i"
+                [disabled]="isAnswerLocked()"
+              />
+              <span class="option-letter">{{ String.fromCharCode(65 + i) }}</span>
+              <span class="option-text">{{ option }}</span>
+            </label>
+          </div>
+
+          <!-- Float Back to Edit Button (Real Exam Only) -->
+          <button 
+            *ngIf="selectedExamType() === 'real' && selectedAnswers()[currentQuestion()] !== null && isAnswerLocked()"
+            class="btn btn-edit-floating"
+            (click)="goBackToEdit()"
+            title="Click to unlock and edit this answer"
+          >
+            ✎ Back to Edit
+          </button>
+        </div>
+      </div>
+
+      <!-- Side Panel -->
+      <div class="side-panel">
+        <!-- Question Navigator -->
+        <div class="question-navigator">
+          <h4>Questions</h4>
+          <div class="question-grid">
+            <button
+              *ngFor="let q of questions(); let i = index"
+              class="question-btn"
+              [ngClass]="getAnswerStatus(i)"
+              [class.current]="currentQuestion() === i"
+              (click)="goToQuestion(i)"
+              [title]="'Question ' + (i + 1)"
+            >
+              {{ i + 1 }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-label">Answered</span>
+            <span class="stat-value">
+              {{ selectedAnswers().filter(a => a !== null).length }}/{{ questions().length }}
+            </span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Unanswered</span>
+            <span class="stat-value">
+              {{ selectedAnswers().filter(a => a === null).length }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="quiz-footer">
+      <button
+        class="btn btn-secondary"
+        (click)="previousQuestion()"
+        [disabled]="currentQuestion() === 0"
+      >
+        ← Previous
+      </button>
+      <button
+        class="btn btn-secondary"
+        (click)="nextQuestion()"
+        [disabled]="currentQuestion() === questions().length - 1"
+      >
+        Next →
+      </button>
+      <button 
+        *ngIf="currentQuestion() === questions().length - 1"
+        class="btn btn-primary" 
+        (click)="submitQuiz()"
+      >
+        Submit Exam
+      </button>
+    </div>
+  </div>
+
+  <!-- Results Screen -->
+  <div *ngIf="quizCompleted()" class="results-screen">
+    <div class="results-card">
+      <!-- Result Header -->
+      <div class="result-header" [ngClass]="result.passed ? 'passed' : 'failed'">
+        <span class="result-icon">{{ result.passed ? '🎉' : '📋' }}</span>
+        <h1>{{ result.passed ? 'Congratulations!' : 'Quiz Completed' }}</h1>
+        <p>{{ result.passed ? 'You passed the exam!' : 'Review your performance below' }}</p>
+      </div>
+
+      <!-- Score Display -->
+      <div class="score-section">
+        <div class="score-circle" [ngClass]="result.passed ? 'passed' : 'failed'">
+          <span class="score-number">{{ result.percentageScore }}%</span>
+          <span class="score-label">Score</span>
+        </div>
+        <div class="score-details">
+          <div class="detail-row">
+            <span>Correct Answers</span>
+            <span class="correct">{{ result.correctAnswers }}/{{ result.totalQuestions }}</span>
+          </div>
+          <div class="detail-row">
+            <span>Passing Score</span>
+            <span>{{ result.passingScore }}%</span>
+          </div>
+          <div class="detail-row">
+            <span>Time Spent</span>
+            <span>{{ (result.timeSpent / 60).toFixed(1) }} minutes</span>
+          </div>
+          <div class="detail-row">
+            <span>Status</span>
+            <span [ngClass]="result.passed ? 'status-passed' : 'status-failed'">
+              {{ result.passed ? 'PASSED ✓' : 'FAILED ✗' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Difficulty Breakdown -->
+      <div class="breakdown">
+        <h3>Performance by Difficulty</h3>
+        <div class="breakdown-grid">
+          <div class="breakdown-item">
+            <span class="difficulty-label easy">Easy</span>
+            <span class="breakdown-score">
+              {{ result.difficultyBreakdown.easy.correct }}/{{ result.difficultyBreakdown.easy.total }}
+            </span>
+            <div class="mini-progress">
+              <div
+                class="mini-fill"
+                [style.width.%]="(result.difficultyBreakdown.easy.correct / result.difficultyBreakdown.easy.total) * 100"
+              ></div>
+            </div>
+          </div>
+          <div class="breakdown-item">
+            <span class="difficulty-label medium">Medium</span>
+            <span class="breakdown-score">
+              {{ result.difficultyBreakdown.medium.correct }}/{{ result.difficultyBreakdown.medium.total }}
+            </span>
+            <div class="mini-progress">
+              <div
+                class="mini-fill"
+                [style.width.%]="(result.difficultyBreakdown.medium.correct / result.difficultyBreakdown.medium.total) * 100"
+              ></div>
+            </div>
+          </div>
+          <div class="breakdown-item">
+            <span class="difficulty-label hard">Hard</span>
+            <span class="breakdown-score">
+              {{ result.difficultyBreakdown.hard.correct }}/{{ result.difficultyBreakdown.hard.total }}
+            </span>
+            <div class="mini-progress">
+              <div
+                class="mini-fill"
+                [style.width.%]="(result.difficultyBreakdown.hard.correct / result.difficultyBreakdown.hard.total) * 100"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="result-actions">
+        <button class="btn btn-secondary" (click)="toggleAnswersReview()">
+          {{ showAnswersReview() ? '✕ Hide Answers' : '📝 Review Answers' }}
+        </button>
+        <button class="btn btn-secondary" (click)="restartQuiz()">
+          Take Another Exam
+        </button>
+        <button class="btn btn-primary" (click)="goToDashboard()">
+          Back to Dashboard
+        </button>
+      </div>
+
+      <!-- Answers Review Section -->
+      <div *ngIf="showAnswersReview()" class="answers-review">
+        <h3>📝 Detailed Answer Review</h3>
+        
+        <div *ngFor="let question of questions(); let i = index" class="answer-card">
+          <div class="answer-header" [ngClass]="getAnswerStatusClass(i)">
+            <div class="answer-number">
+              <span class="q-number">Q{{ i + 1 }}</span>
+              <span class="status-icon">
+                {{ selectedAnswers()[i] === question.correctAnswer ? '✓' : '✗' }}
+              </span>
+            </div>
+            <div class="answer-meta">
+              <span class="difficulty" [ngClass]="'difficulty-' + question.difficulty.toLowerCase()">
+                {{ question.difficulty }}
+              </span>
+              <span class="topic">{{ question.topic }}</span>
+            </div>
+          </div>
+
+          <div class="question-text">{{ question.question }}</div>
+
+          <div class="answer-comparison">
+            <div class="user-answer" [ngClass]="selectedAnswers()[i] === question.correctAnswer ? 'correct' : (selectedAnswers()[i] !== null ? 'incorrect' : 'not-answered')">
+              <h4>Your Answer:</h4>
+              <p *ngIf="selectedAnswers()[i] !== null" class="answer-text">
+                <strong>{{ String.fromCharCode(65 + selectedAnswers()[i]!) }}.</strong>
+                {{ question.options[selectedAnswers()[i]!] }}
+              </p>
+              <p *ngIf="selectedAnswers()[i] === null" class="not-answered">Not answered</p>
+              <span class="status-label" *ngIf="selectedAnswers()[i] !== null">
+                {{ selectedAnswers()[i] === question.correctAnswer ? 'CORRECT ✓' : 'INCORRECT ✗' }}
+              </span>
+              <span class="status-label" *ngIf="selectedAnswers()[i] === null">NOT ANSWERED</span>
+            </div>
+
+            <div class="correct-answer" *ngIf="selectedAnswers()[i] !== question.correctAnswer || selectedAnswers()[i] === null">
+              <h4>Correct Answer:</h4>
+              <p class="answer-text">
+                <strong>{{ String.fromCharCode(65 + question.correctAnswer) }}.</strong>
+                {{ question.options[question.correctAnswer] }}
+              </p>
+              <span class="status-label">CORRECT ✓</span>
+            </div>
+          </div>
+
+          <div class="explanation">
+            <h4>📚 Explanation:</h4>
+            <p>{{ question.explanation }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

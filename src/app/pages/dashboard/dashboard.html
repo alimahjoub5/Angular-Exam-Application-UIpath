@@ -1,0 +1,126 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo-section">
+        <span class="logo-icon">🤖</span>
+        <h1>UiPath Academy</h1>
+      </div>
+      <div class="user-section">
+        <div class="user-info">
+          <span class="greeting">Welcome, {{ currentUser?.name }}!</span>
+          <span class="role" [ngClass]="'role-' + currentUser?.role">
+            {{ currentUser?.role === 'student' ? '👨‍🎓 Student' : '👩‍🏫 Instructor' }}
+          </span>
+        </div>
+        <button class="logout-btn" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="dashboard-main">
+    <!-- Welcome Section -->
+    <section class="welcome-section">
+      <h2>Continue Your Learning Journey</h2>
+      <p>Pick up where you left off and master UiPath automation</p>
+    </section>
+
+    <!-- Courses Grid -->
+    <section class="courses-section">
+      <h3>Your Courses</h3>
+      
+      <!-- Loading State -->
+      <div *ngIf="isLoading()" class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading your courses...</p>
+      </div>
+
+      <!-- Courses Grid -->
+      <div *ngIf="!isLoading()" class="courses-grid">
+        <div *ngFor="let item of courses()" class="course-card">
+          <div class="course-header">
+            <div class="course-info">
+              <span class="course-level">{{ item.course.level }}</span>
+              <h4>{{ item.course.title }}</h4>
+            </div>
+            <span class="progress-percentage">{{ item.progress }}%</span>
+          </div>
+
+          <p class="course-description">{{ item.course.description }}</p>
+
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="item.progress"></div>
+          </div>
+
+          <div class="course-stats">
+            <div class="stat">
+              <span class="stat-icon">📚</span>
+              <span>{{ item.completed }} / {{ item.lessons }} lessons</span>
+            </div>
+            <div class="stat">
+              <span class="stat-icon">⏱️</span>
+              <span>{{ item.course.duration }}</span>
+            </div>
+          </div>
+
+          <button class="course-btn" (click)="continueCourse(item.course.title)">
+            {{ item.progress === 0 ? 'Start Course' : 'Continue' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoading() && courses().length === 0" class="empty-state">
+        <p>No courses enrolled yet. Visit the courses page to get started!</p>
+      </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="quick-actions">
+      <div class="action-card" routerLink="/exam">
+        <span class="action-icon">📝</span>
+        <h3>Take Exam</h3>
+        <p>Test your knowledge with 10 questions</p>
+        <span class="action-arrow">→</span>
+      </div>
+      <div class="action-card">
+        <span class="action-icon">📚</span>
+        <h3>Browse Courses</h3>
+        <p>Explore all available courses</p>
+        <span class="action-arrow">→</span>
+      </div>
+      <div class="action-card">
+        <span class="action-icon">🏆</span>
+        <h3>My Achievements</h3>
+        <p>View your badges and certificates</p>
+        <span class="action-arrow">→</span>
+      </div>
+    </section>
+
+    <!-- Quick Stats -->
+    <section class="stats-section">
+      <div class="stat-card">
+        <span class="stat-icon">🏆</span>
+        <div class="stat-content">
+          <h4>Achievements</h4>
+          <p>5 badges earned</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">⏱️</span>
+        <div class="stat-content">
+          <h4>Learning Time</h4>
+          <p>42 hours this month</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">⭐</span>
+        <div class="stat-content">
+          <h4>Current Streak</h4>
+          <p>7 days in a row</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>

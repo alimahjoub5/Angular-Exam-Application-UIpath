@@ -1,0 +1,341 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "student@uipath.com",
+      "password": "password123",
+      "name": "Ahmed Student",
+      "role": "student",
+      "avatar": "👨‍🎓",
+      "joinDate": "2024-01-15",
+      "bio": "Learning RPA automation"
+    },
+    {
+      "id": 2,
+      "email": "instructor@uipath.com",
+      "password": "password123",
+      "name": "Fatima Instructor",
+      "role": "instructor",
+      "avatar": "👩‍🏫",
+      "joinDate": "2023-06-20",
+      "bio": "Expert in UiPath automation and RPA solutions",
+      "expertise": ["UiPath", "RPA", "Automation", "Process Mining"]
+    },
+    {
+      "id": 3,
+      "email": "test@example.com",
+      "password": "test123",
+      "name": "Test User",
+      "role": "student",
+      "avatar": "👤",
+      "joinDate": "2024-03-10"
+    },
+    {
+      "id": 4,
+      "email": "admin@uipath.com",
+      "password": "admin123",
+      "name": "Admin User",
+      "role": "instructor",
+      "avatar": "👨‍💼",
+      "joinDate": "2023-01-01"
+    }
+  ],
+  "courses": [
+    {
+      "id": 1,
+      "title": "UiPath Fundamentals",
+      "level": "Beginner",
+      "description": "Learn the basics of UiPath Studio and automation concepts",
+      "duration": "4 weeks",
+      "lessons": 12,
+      "instructor": 2,
+      "image": "📚",
+      "color": "beginner",
+      "rating": 4.8,
+      "students": 1250,
+      "skills": ["UiPath Studio", "Recording", "Selectors", "Variables"],
+      "price": 0,
+      "isFree": true
+    },
+    {
+      "id": 2,
+      "title": "Advanced Automation",
+      "level": "Intermediate",
+      "description": "Master advanced automation techniques and best practices",
+      "duration": "6 weeks",
+      "lessons": 18,
+      "instructor": 2,
+      "image": "🚀",
+      "color": "intermediate",
+      "rating": 4.7,
+      "students": 850,
+      "skills": ["Advanced Selectors", "Error Handling", "Debugging", "Performance"],
+      "price": 0,
+      "isFree": true
+    },
+    {
+      "id": 3,
+      "title": "Enterprise Solutions",
+      "level": "Advanced",
+      "description": "Build enterprise-grade RPA solutions with UiPath",
+      "duration": "8 weeks",
+      "lessons": 20,
+      "instructor": 2,
+      "image": "🏢",
+      "color": "advanced",
+      "rating": 4.9,
+      "students": 420,
+      "skills": ["Process Mining", "Orchestrator", "Robots", "Licensing"],
+      "price": 0,
+      "isFree": true
+    },
+    {
+      "id": 4,
+      "title": "UiPath Integration",
+      "level": "Advanced",
+      "description": "Integrate UiPath with enterprise systems and APIs",
+      "duration": "5 weeks",
+      "lessons": 15,
+      "instructor": 2,
+      "image": "🔗",
+      "color": "advanced",
+      "rating": 4.6,
+      "students": 380,
+      "skills": ["API Integration", "Database", "Web Services", "REST"],
+      "price": 0,
+      "isFree": true
+    }
+  ],
+  "lessons": [
+    {
+      "id": 1,
+      "courseId": 1,
+      "title": "Introduction to UiPath",
+      "description": "Get started with UiPath Studio and understand the interface",
+      "duration": 15,
+      "videoUrl": "https://example.com/video1",
+      "content": "Learn the basics of UiPath automation platform...",
+      "completed": false,
+      "order": 1
+    },
+    {
+      "id": 2,
+      "courseId": 1,
+      "title": "Recording Workflows",
+      "description": "Learn how to record and playback user actions",
+      "duration": 20,
+      "videoUrl": "https://example.com/video2",
+      "content": "Recording is the easiest way to create workflows...",
+      "completed": false,
+      "order": 2
+    },
+    {
+      "id": 3,
+      "courseId": 1,
+      "title": "Selectors and Elements",
+      "description": "Master selectors for reliable automation",
+      "duration": 25,
+      "videoUrl": "https://example.com/video3",
+      "content": "Selectors are crucial for accurate element identification...",
+      "completed": false,
+      "order": 3
+    },
+    {
+      "id": 4,
+      "courseId": 2,
+      "title": "Advanced Error Handling",
+      "description": "Handle errors gracefully in your workflows",
+      "duration": 30,
+      "videoUrl": "https://example.com/video4",
+      "content": "Error handling is essential for robust automation...",
+      "completed": false,
+      "order": 1
+    },
+    {
+      "id": 5,
+      "courseId": 2,
+      "title": "Performance Optimization",
+      "description": "Optimize your workflows for maximum performance",
+      "duration": 25,
+      "videoUrl": "https://example.com/video5",
+      "content": "Performance optimization techniques and best practices...",
+      "completed": false,
+      "order": 2
+    },
+    {
+      "id": 6,
+      "courseId": 3,
+      "title": "UiPath Orchestrator",
+      "description": "Manage and monitor robots with Orchestrator",
+      "duration": 35,
+      "videoUrl": "https://example.com/video6",
+      "content": "Orchestrator is the central hub for robot management...",
+      "completed": false,
+      "order": 1
+    }
+  ],
+  "quizzes": [
+    {
+      "id": 1,
+      "lessonId": 1,
+      "title": "UiPath Basics Quiz",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What is UiPath primarily used for?",
+          "options": [
+            "Web development",
+            "Robotic Process Automation",
+            "Database management",
+            "Network administration"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "id": 2,
+          "question": "Which of these is NOT a UiPath component?",
+          "options": ["Studio", "Robot", "Orchestrator", "Compiler"],
+          "correctAnswer": 3
+        }
+      ],
+      "passingScore": 70
+    },
+    {
+      "id": 2,
+      "lessonId": 2,
+      "title": "Recording Workflows Quiz",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What are the two main recording types in UiPath?",
+          "options": [
+            "Basic and Advanced",
+            "Desktop and Web",
+            "Basic and Desktop",
+            "Web and Mobile"
+          ],
+          "correctAnswer": 2
+        }
+      ],
+      "passingScore": 75
+    }
+  ],
+  "enrollments": [
+    {
+      "id": 1,
+      "userId": 1,
+      "courseId": 1,
+      "enrollDate": "2024-06-01",
+      "progress": 65,
+      "completedLessons": 8,
+      "totalLessons": 12,
+      "status": "in-progress"
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "courseId": 2,
+      "enrollDate": "2024-06-15",
+      "progress": 40,
+      "completedLessons": 4,
+      "totalLessons": 10,
+      "status": "in-progress"
+    },
+    {
+      "id": 3,
+      "userId": 1,
+      "courseId": 3,
+      "enrollDate": "2024-06-20",
+      "progress": 0,
+      "completedLessons": 0,
+      "totalLessons": 15,
+      "status": "not-started"
+    }
+  ],
+  "achievements": [
+    {
+      "id": 1,
+      "title": "First Steps",
+      "description": "Complete your first lesson",
+      "icon": "🎯",
+      "userId": 1,
+      "unlockedDate": "2024-06-01"
+    },
+    {
+      "id": 2,
+      "title": "Course Completer",
+      "description": "Complete an entire course",
+      "icon": "🏆",
+      "userId": 1,
+      "unlockedDate": "2024-06-10"
+    },
+    {
+      "id": 3,
+      "title": "Quick Learner",
+      "description": "Complete 5 lessons in one week",
+      "icon": "⚡",
+      "userId": 1,
+      "unlockedDate": "2024-06-15"
+    },
+    {
+      "id": 4,
+      "title": "Streak Master",
+      "description": "Maintain a 7-day learning streak",
+      "icon": "🔥",
+      "userId": 1,
+      "unlockedDate": "2024-06-25"
+    },
+    {
+      "id": 5,
+      "title": "Quiz Master",
+      "description": "Score 100% on 3 quizzes",
+      "icon": "💯",
+      "userId": 1,
+      "unlockedDate": "2024-06-28"
+    }
+  ],
+  "resources": [
+    {
+      "id": 1,
+      "courseId": 1,
+      "title": "UiPath Cheat Sheet",
+      "type": "pdf",
+      "url": "https://example.com/resources/uipath-cheatsheet.pdf",
+      "downloadCount": 1250
+    },
+    {
+      "id": 2,
+      "courseId": 1,
+      "title": "Selector Guide",
+      "type": "pdf",
+      "url": "https://example.com/resources/selector-guide.pdf",
+      "downloadCount": 890
+    },
+    {
+      "id": 3,
+      "courseId": 2,
+      "title": "Best Practices Document",
+      "type": "pdf",
+      "url": "https://example.com/resources/best-practices.pdf",
+      "downloadCount": 650
+    }
+  ],
+  "comments": [
+    {
+      "id": 1,
+      "lessonId": 1,
+      "userId": 1,
+      "text": "Great introduction! Really helpful.",
+      "timestamp": "2024-06-02",
+      "likes": 5
+    },
+    {
+      "id": 2,
+      "lessonId": 1,
+      "userId": 3,
+      "text": "Can you explain this more in detail?",
+      "timestamp": "2024-06-03",
+      "likes": 2
+    }
+  ]
+}

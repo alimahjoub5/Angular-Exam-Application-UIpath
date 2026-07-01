@@ -1,0 +1,231 @@
+/* Global Button Styles */
+
+/* Base Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Primary Button (Orange) */
+.btn-primary {
+  background: linear-gradient(135deg, #FF7A00 0%, #FF5722 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.2);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 87, 34, 0.35);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(255, 87, 34, 0.2);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Secondary Button (Outline) */
+.btn-secondary {
+  background: white;
+  color: #FF5722;
+  border: 2px solid #FF5722;
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.1);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #fff8f4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 87, 34, 0.2);
+}
+
+.btn-secondary:active:not(:disabled) {
+  background: #ffe8d9;
+  transform: translateY(0);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Block Button (Full Width) */
+.btn-block {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 16px;
+}
+
+/* Large Button */
+.btn-large {
+  padding: 16px 32px;
+  font-size: 16px;
+}
+
+/* Small Button */
+.btn-small {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+/* Exit Button (Red) */
+.btn-exit {
+  background: #dc3545;
+  color: white;
+  padding: 8px 12px;
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+  border-radius: 6px;
+}
+
+.btn-exit:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-exit:active {
+  transform: translateY(0);
+}
+
+/* Navigation Button (Previous/Next) */
+.btn-nav {
+  background: white;
+  color: #FF5722;
+  border: 2px solid #FF5722;
+  padding: 12px 20px;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.1);
+}
+
+.btn-nav:hover:not(:disabled) {
+  background: #fff8f4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.2);
+}
+
+.btn-nav:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Floating Action Button */
+.btn-floating {
+  position: fixed;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.btn-floating-primary {
+  background: linear-gradient(135deg, #FF7A00 0%, #FF5722 100%);
+  color: white;
+}
+
+.btn-floating-primary:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(255, 87, 34, 0.3);
+}
+
+/* Icon Button */
+.btn-icon {
+  padding: 8px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 6px;
+}
+
+/* Danger Button */
+.btn-danger {
+  background: #dc3545;
+  color: white;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+/* Success Button */
+.btn-success {
+  background: #28a745;
+  color: white;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Loading State */
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Focus State (Accessibility) */
+.btn:focus-visible {
+  outline: 2px solid #FF7A00;
+  outline-offset: 2px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .btn {
+    font-size: 14px;
+    padding: 10px 20px;
+  }
+
+  .btn-block {
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+
+  .btn-large {
+    padding: 14px 24px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn {
+    font-size: 13px;
+    padding: 10px 16px;
+  }
+
+  .btn-block {
+    padding: 12px 16px;
+  }
+
+  .btn-large {
+    padding: 12px 20px;
+  }
+}
