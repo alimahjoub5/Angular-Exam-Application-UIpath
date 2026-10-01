@@ -3,6 +3,8 @@ import http from 'node:http';
 const PORT = Number(process.env.PORT || 3000);
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5.6';
+const CACHE_TTL_MS = 30 * 60 * 1000;
+const examCache = new Map();
 
 const topics = [
   'UiPath Studio and project structure',
@@ -48,22 +50,19 @@ function extractOutputText(response) {
 }
 
 function buildPrompt(count, mode) {
-  return `Create exactly ${count} original practice questions for the UiPath Certified Professional Automation Developer Associate exam.
+  return `Create exactly ${count} original ENGLISH UiPath Automation Developer Associate practice questions.
 
-The questions must be in ENGLISH and should feel like a difficult Pearson VUE-style certification exam rather than a simple memorization quiz.
+Style: difficult certification-style scenarios; practical troubleshooting/design decisions; 4 plausible options; exactly 1 correct answer; mostly Medium/Hard; no dumps or copied exam questions.
 
-Requirements:
-- Focus on realistic workplace scenarios, troubleshooting, design choices, and best-practice decisions.
-- Avoid trivia and obvious definition-only questions.
-- Use four answer options per question.
-- Exactly one answer must be correct.
-- Make distractors plausible.
-- Mix Medium and Hard questions heavily; Easy questions should be rare.
-- Cover these topics broadly: ${topics.join(', ')}.
-- Do not claim the questions are official, leaked, recalled, or copied from the real certification exam.
-- Do not reproduce known exam dumps.
-- Each explanation must state why the correct answer is right and briefly identify the key trap in the distractors.
-- Mode: ${mode === 'real' ? 'full 60-question mock exam' : '10-question intensive practice'}.
+Topics: ${topics.join('; ')}.
+
+Keep output compact to reduce token use:
+- question <= 55 words
+- each option <= 14 words
+- explanation <= 28 words
+- topic <= 5 words
+
+Mode: ${mode === 'real' ? 'full-mock economy sample' : 'intensive practice'}.
 `;
 }
 
@@ -131,8 +130,15 @@ const server = http.createServer(async (req, res) => {
   req.on('end', async () => {
     try {
       const payload = JSON.parse(body || '{}');
-      const count = payload.count === 60 ? 60 : 10;
+      const count = payload.count === 10 ? 10 : 10;
       const mode = payload.mode === 'real' ? 'real' : 'small';
+      const cacheKey = `${count}:${mode}`;
+      const cached = examCache.get(cacheKey);
+
+      if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) {
+        send(res, 200, cached.payload);
+        return;
+      }
 
       const response = await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
@@ -177,6 +183,11 @@ const server = http.createServer(async (req, res) => {
       if (!Array.isArray(parsed.questions) || parsed.questions.length !== count) {
         throw new Error(`Expected ${count} questions but received ${parsed.questions?.length ?? 0}.`);
       }
+
+      examCache.set(cacheKey, {
+        createdAt: Date.now(),
+        payload: parsed
+      });
 
       send(res, 200, parsed);
     } catch (error) {
