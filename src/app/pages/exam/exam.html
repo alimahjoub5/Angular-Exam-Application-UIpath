@@ -17,6 +17,27 @@
         <p>Select the type of exam you want to take</p>
       </div>
 
+      <div class="ai-connection-card" [ngClass]="'connection-' + aiStatus()">
+        <div class="connection-indicator">
+          <span class="connection-dot"></span>
+        </div>
+        <div class="connection-copy">
+          <strong>
+            {{
+              aiStatus() === 'connected' ? 'AI backend connected' :
+              aiStatus() === 'not-configured' ? 'AI backend online — API key missing' :
+              aiStatus() === 'offline' ? 'AI backend offline' :
+              'Checking AI connection...'
+            }}
+          </strong>
+          <span *ngIf="aiStatus() === 'connected'">Ready to generate fresh questions{{ aiModel() ? ' with ' + aiModel() : '' }}.</span>
+          <span *ngIf="aiStatus() === 'not-configured'">Start the API terminal with OPENAI_API_KEY set.</span>
+          <span *ngIf="aiStatus() === 'offline'">Make sure <code>npm run api</code> is running on port 3000.</span>
+          <span *ngIf="aiStatus() === 'checking'">Testing Angular → /api → backend...</span>
+        </div>
+        <button type="button" class="connection-retry" (click)="checkAiConnection()">Retry</button>
+      </div>
+
       <div class="exam-options">
         <!-- Small Exam Option -->
         <div class="exam-option" (click)="selectExamType('small')">
