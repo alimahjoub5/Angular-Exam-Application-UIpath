@@ -1,3 +1,12 @@
+<div *ngIf="showToast()" class="ai-toast" [ngClass]="'toast-' + toastType()">
+  <div class="toast-icon">{{ toastType() === 'success' ? '✓' : (toastType() === 'warning' ? '!' : 'i') }}</div>
+  <div class="toast-content">
+    <strong>{{ toastType() === 'success' ? 'AI questions received' : (toastType() === 'warning' ? 'Fallback activated' : 'Update') }}</strong>
+    <span>{{ toastMessage() }}</span>
+  </div>
+  <button type="button" class="toast-close" (click)="closeToast()" aria-label="Close notification">×</button>
+</div>
+
 <div class="exam-container">
   <!-- Exam Selection Screen -->
   <div *ngIf="!examSelected() && !isStarted() && !quizCompleted()" class="selection-screen">
@@ -39,7 +48,7 @@
             </div>
           </div>
           <p class="option-description">10 fresh scenario-based questions generated for intensive practice</p>
-          <button class="btn btn-primary btn-block">Start Small Exam</button>
+          <button class="btn btn-primary btn-block">Generate 10 Questions</button>
         </div>
 
         <!-- Real Exam Option -->
@@ -73,7 +82,7 @@
             </div>
           </div>
           <p class="option-description">60 fresh scenario-based questions designed to simulate certification-level reasoning</p>
-          <button class="btn btn-primary btn-block">Start Real Exam</button>
+          <button class="btn btn-primary btn-block">Generate Full Mock</button>
         </div>
       </div>
 
@@ -136,7 +145,8 @@
         </ul>
       </div>
 
-      <div *ngIf="generationMessage()" class="generation-status" [class.fallback]="questionSource() === 'local'">
+      <div *ngIf="generationMessage() && !isGenerating()" class="generation-status" [class.fallback]="questionSource() === 'local'">
+        <span class="status-dot"></span>
         {{ generationMessage() }}
       </div>
       <button class="btn btn-primary btn-large" (click)="startQuiz()" [disabled]="isGenerating()">
@@ -145,6 +155,30 @@
       <button class="btn btn-secondary btn-large" (click)="selectedExamType.set(null); examSelected.set(false)">
         Back to Exam Selection
       </button>
+    </div>
+  </div>
+
+  <div *ngIf="isGenerating()" class="ai-generation-overlay">
+    <div class="ai-generation-card">
+      <div class="ai-orbit">
+        <span>AI</span>
+      </div>
+      <p class="eyebrow">UiPath ADA Exam Trainer</p>
+      <h2>Creating your fresh practice set</h2>
+      <p class="generation-copy">{{ generationMessage() }}</p>
+
+      <div class="generation-progress">
+        <div class="generation-progress-fill" [style.width.%]="generationStep() * 25"></div>
+      </div>
+
+      <div class="generation-steps">
+        <span [class.active]="generationStep() >= 1">Connect</span>
+        <span [class.active]="generationStep() >= 2">Generate</span>
+        <span [class.active]="generationStep() >= 3">Validate</span>
+        <span [class.active]="generationStep() >= 4">Ready</span>
+      </div>
+
+      <p class="generation-note">Questions are generated in English and optimized for scenario-based certification practice.</p>
     </div>
   </div>
 
@@ -159,7 +193,10 @@
     <div class="quiz-header">
       <div class="header-left">
         <h2>Question {{ currentQuestion() + 1 }} of {{ questions().length }}</h2>
-        <span class="question-source">{{ questionSource() === 'ai' ? 'Fresh AI-generated set' : 'Local fallback set' }}</span>
+        <span class="question-source" [class.ai-source]="questionSource() === 'ai'">
+          <span class="source-pulse"></span>
+          {{ questionSource() === 'ai' ? 'AI-generated question set' : 'Local fallback question set' }}
+        </span>
         <div class="progress-bar">
           <div class="progress-fill" [style.width.%]="((currentQuestion() + 1) / questions().length) * 100"></div>
         </div>
