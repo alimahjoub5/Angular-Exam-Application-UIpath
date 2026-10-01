@@ -32,6 +32,12 @@ export class ExamComponent implements OnInit, OnDestroy {
   isGenerating = signal(false);
   questionSource = signal<'ai' | 'local'>('local');
   generationMessage = signal('');
+  generationStep = signal(0);
+  toastMessage = signal('');
+  toastType = signal<'success' | 'warning' | 'info'>('info');
+  showToast = signal(false);
+  private generationStageTimer: any;
+  private toastTimer: any;
 
   private timerInterval: any;
   examDuration = { small: 30, real: 90 };
@@ -85,20 +91,27 @@ export class ExamComponent implements OnInit, OnDestroy {
     const timeMinutes = examType === 'small' ? 30 : 90;
 
     this.isGenerating.set(true);
-    this.generationMessage.set('Generating fresh Pearson VUE-style scenarios...');
+    this.generationStep.set(1);
+    this.generationMessage.set('Connecting to the AI question generator...');
+    this.startGenerationStages();
 
     let examQuestions: QuizQuestion[];
 
     try {
       examQuestions = await this.aiExamService.generateExam(questionCount, examType);
       this.questionSource.set('ai');
-      this.generationMessage.set('Fresh AI-generated exam ready.');
+      this.generationStep.set(4);
+      this.generationMessage.set(`${examQuestions.length} fresh AI-generated questions are ready.`);
+      this.notify('success', `AI questions received — ${examQuestions.length} fresh questions are ready.`);
     } catch (error) {
       console.warn('AI exam generation failed. Falling back to local question bank.', error);
       examQuestions = this.quizService.getShuffledQuestions(questionCount);
       this.questionSource.set('local');
-      this.generationMessage.set('AI unavailable — using the local question bank.');
+      this.generationStep.set(4);
+      this.generationMessage.set('AI unavailable — the local question bank was loaded instead.');
+      this.notify('warning', 'AI generation was unavailable. A local practice set has been loaded.');
     } finally {
+      this.stopGenerationStages();
       this.isGenerating.set(false);
     }
 
@@ -224,7 +237,10 @@ export class ExamComponent implements OnInit, OnDestroy {
     this.questions.set([]);
     this.result = null;
     this.generationMessage.set('');
+    this.generationStep.set(0);
+    this.generationStep.set(0);
     this.questionSource.set('local');
+    this.showToast.set(false);
   }
 
   selectExamType(type: 'small' | 'real'): void {
@@ -250,6 +266,57 @@ export class ExamComponent implements OnInit, OnDestroy {
       }
       this.isStarted.set(false);
       this.router.navigate(['/']);
+    }
+  }
+
+  private startGenerationStages(): void {
+    this.stopGenerationStages();
+    const stages = [
+      'Connecting to the AI question generator...',
+      'Building certification-level scenarios...',
+      'Checking answers, distractors, and explanations...'
+    ];
+
+    let index = 0;
+    this.generationMessage.set(stages[index]);
+
+    this.generationStageTimer = setInterval(() => {
+      index = Math.min(index + 1, stages.length - 1);
+      this.generationStep.set(index + 1);
+      this.generationMessage.set(stages[index]);
+
+      if (index === stages.length - 1) {
+        this.stopGenerationStages();
+      }
+    }, 1600);
+  }
+
+  private stopGenerationStages(): void {
+    if (this.generationStageTimer) {
+      clearInterval(this.generationStageTimer);
+      this.generationStageTimer = null;
+    }
+  }
+
+  private notify(type: 'success' | 'warning' | 'info', message: string): void {
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+    }
+
+    this.toastType.set(type);
+    this.toastMessage.set(message);
+    this.showToast.set(true);
+
+    this.toastTimer = setTimeout(() => {
+      this.showToast.set(false);
+    }, 5000);
+  }
+
+  closeToast(): void {
+    this.showToast.set(false);
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+      this.toastTimer = null;
     }
   }
 
@@ -283,6 +350,10 @@ export class ExamComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
+    }
+    this.stopGenerationStages();
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
     }
 
     window.removeEventListener('beforeunload', this.onBeforeUnload);
