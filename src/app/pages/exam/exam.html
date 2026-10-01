@@ -102,8 +102,8 @@
               </div>
             </div>
           </div>
-          <p class="option-description">60 fresh scenario-based questions designed to simulate certification-level reasoning</p>
-          <button class="btn btn-primary btn-block">Generate Full Mock</button>
+          <p class="option-description">Economy mode: 10 fresh AI scenarios + 50 local questions to minimize token usage</p>
+          <button class="btn btn-primary btn-block">Start 60-Question Mock</button>
         </div>
       </div>
 
@@ -338,9 +338,15 @@
     <div class="quiz-header">
       <div class="header-left">
         <h2>Question {{ currentQuestion() + 1 }} of {{ questions().length }}</h2>
-        <span class="question-source" [class.ai-source]="questionSource() === 'ai'">
+        <span class="question-source" [class.ai-source]="questionSource() !== 'local'">
           <span class="source-pulse"></span>
-          {{ questionSource() === 'ai' ? 'AI-generated question set' : 'Local fallback question set' }}
+          {{
+            questionSource() === 'ai'
+              ? 'AI-generated question set'
+              : questionSource() === 'hybrid'
+                ? 'Economy mode: AI + local question set'
+                : 'Local fallback question set'
+          }}
         </span>
         <div class="progress-bar">
           <div class="progress-fill" [style.width.%]="((currentQuestion() + 1) / questions().length) * 100"></div>
