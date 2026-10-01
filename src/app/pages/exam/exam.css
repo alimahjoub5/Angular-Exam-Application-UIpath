@@ -1672,3 +1672,135 @@
     grid-column: auto;
   }
 }
+
+
+/* Topic training */
+.topic-training {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  border: 1px solid #e6e6e6;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+.topic-training-copy h2 {
+  margin: 0;
+  color: #202020;
+  font-size: 1.45rem;
+}
+
+.topic-training-copy p {
+  margin: 0.45rem 0 1.2rem;
+  color: #686868;
+  line-height: 1.5;
+}
+
+.topic-training-controls {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.topic-training-controls label {
+  color: #333;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.topic-training-controls select {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 11px;
+  background: #fafafa;
+  color: #242424;
+  font: inherit;
+  font-weight: 600;
+  outline: none;
+}
+
+.topic-training-controls select:focus {
+  border-color: #FF7A00;
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+}
+
+.topic-mode-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.topic-action {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid #e3e3e3;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.topic-action:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: #FF7A00;
+  box-shadow: 0 8px 18px rgba(255, 122, 0, 0.1);
+}
+
+.topic-action > span {
+  font-size: 1.4rem;
+}
+
+.topic-action div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.topic-action strong {
+  color: #252525;
+}
+
+.topic-action small {
+  color: #747474;
+}
+
+.local-action {
+  background: #f5fbf7;
+  border-color: #cfe8da;
+}
+
+.ai-action {
+  background: #fff9f3;
+  border-color: #ffd1aa;
+}
+
+.topic-action:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.token-tip {
+  margin-top: 0.9rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 10px;
+  background: #f7f7f7;
+  color: #666;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.token-tip strong {
+  color: #333;
+}
+
+@media (max-width: 680px) {
+  .topic-mode-actions {
+    grid-template-columns: 1fr;
+  }
+}
