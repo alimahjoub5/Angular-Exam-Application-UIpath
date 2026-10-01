@@ -1151,3 +1151,27 @@
     flex-direction: column;
   }
 }
+
+
+/* AI exam generation status */
+.generation-status {
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  font-weight: 600;
+  text-align: center;
+}
+
+.generation-status.fallback {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.question-source {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  opacity: 0.72;
+}
