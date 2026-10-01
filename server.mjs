@@ -49,21 +49,16 @@ function extractOutputText(response) {
   throw new Error('No text output returned by OpenAI.');
 }
 
-function buildPrompt(count, mode) {
+function buildPrompt(count, mode, topic) {
+  const scope = topic
+    ? `Focus ONLY on this topic: ${topic}.`
+    : `Topics: ${topics.join('; ')}.`;
+
   return `Create exactly ${count} original ENGLISH UiPath Automation Developer Associate practice questions.
-
-Style: difficult certification-style scenarios; practical troubleshooting/design decisions; 4 plausible options; exactly 1 correct answer; mostly Medium/Hard; no dumps or copied exam questions.
-
-Topics: ${topics.join('; ')}.
-
-Keep output compact to reduce token use:
-- question <= 55 words
-- each option <= 14 words
-- explanation <= 28 words
-- topic <= 5 words
-
-Mode: ${mode === 'real' ? 'full-mock economy sample' : 'intensive practice'}.
-`;
+${scope}
+Use difficult certification-style scenarios, 4 plausible options, exactly 1 correct answer, mostly Medium/Hard. No dumps or copied exam questions.
+Be compact: question <=55 words; option <=14 words; explanation <=28 words; topic <=5 words.
+Mode: ${mode === 'real' ? 'full-mock economy sample' : 'intensive practice'}.`;
 }
 
 const questionSchema = {
@@ -130,9 +125,10 @@ const server = http.createServer(async (req, res) => {
   req.on('end', async () => {
     try {
       const payload = JSON.parse(body || '{}');
-      const count = payload.count === 10 ? 10 : 10;
+      const count = payload.count === 2 ? 2 : 10;
       const mode = payload.mode === 'real' ? 'real' : 'small';
-      const cacheKey = `${count}:${mode}`;
+      const topic = typeof payload.topic === 'string' ? payload.topic.trim().slice(0, 80) : '';
+      const cacheKey = `${count}:${mode}:${topic || 'mixed'}`;
       const cached = examCache.get(cacheKey);
 
       if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) {
@@ -155,7 +151,7 @@ const server = http.createServer(async (req, res) => {
             },
             {
               role: 'user',
-              content: buildPrompt(count, mode)
+              content: buildPrompt(count, mode, topic)
             }
           ],
           text: {
