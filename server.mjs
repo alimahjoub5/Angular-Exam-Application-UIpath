@@ -166,7 +166,10 @@ const server = http.createServer(async (req, res) => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data?.error?.message || `OpenAI request failed with status ${response.status}`);
+        const details = data?.error?.message || `OpenAI request failed with status ${response.status}`;
+        const code = data?.error?.code ? ` [${data.error.code}]` : '';
+        const type = data?.error?.type ? ` (${data.error.type})` : '';
+        throw new Error(`${details}${code}${type}`);
       }
 
       const parsed = JSON.parse(extractOutputText(data));
