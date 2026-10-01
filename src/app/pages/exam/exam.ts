@@ -36,6 +36,8 @@ export class ExamComponent implements OnInit, OnDestroy {
   toastMessage = signal('');
   toastType = signal<'success' | 'warning' | 'info'>('info');
   showToast = signal(false);
+  aiStatus = signal<'checking' | 'connected' | 'not-configured' | 'offline'>('checking');
+  aiModel = signal('');
   private generationStageTimer: any;
   private toastTimer: any;
 
@@ -71,6 +73,26 @@ export class ExamComponent implements OnInit, OnDestroy {
     // Keep the current behavior while supporting authenticated users.
     window.addEventListener('beforeunload', this.onBeforeUnload);
     this.setupAntiCheatProtection();
+    this.checkAiConnection();
+  }
+
+  async checkAiConnection(): Promise<void> {
+    this.aiStatus.set('checking');
+
+    try {
+      const health = await this.aiExamService.health();
+      this.aiModel.set(health.model);
+
+      if (!health.configured) {
+        this.aiStatus.set('not-configured');
+        return;
+      }
+
+      this.aiStatus.set('connected');
+    } catch (error) {
+      console.warn('AI backend health check failed.', error);
+      this.aiStatus.set('offline');
+    }
   }
 
   private setupAntiCheatProtection(): void {
