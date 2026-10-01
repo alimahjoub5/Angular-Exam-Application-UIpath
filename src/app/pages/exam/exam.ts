@@ -2,7 +2,8 @@ import { Component, OnInit, signal, effect, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { QuizService, QuizAttempt, QuizQuestion } from '../../services/quiz.service';
+import { QuizService, QuizQuestion } from '../../services/quiz.service';
+import { AiExamService } from '../../services/ai-exam.service';
 
 @Component({
   selector: 'app-exam',
@@ -13,12 +14,10 @@ import { QuizService, QuizAttempt, QuizQuestion } from '../../services/quiz.serv
 })
 export class ExamComponent implements OnInit, OnDestroy {
   currentUser = signal(null as any);
-  
-  // Exam selection state
+
   examSelected = signal(false);
   selectedExamType = signal<'small' | 'real' | null>(null);
-  
-  // Quiz state
+
   isStarted = signal(false);
   currentQuestion = signal(0);
   timeRemaining = signal(0);
@@ -30,29 +29,30 @@ export class ExamComponent implements OnInit, OnDestroy {
   showAnswersReview = signal(false);
   result: any = null;
 
-  // Timer interval
+  isGenerating = signal(false);
+  questionSource = signal<'ai' | 'local'>('local');
+  generationMessage = signal('');
+
   private timerInterval: any;
-  examDuration = { small: 30, real: 90 }; // in minutes
-  
-  // Anti-cheat tracking
+  examDuration = { small: 30, real: 90 };
+
   cheatAttempts = signal(0);
   private maxCheatAttempts = 3;
   private lastBlurWarningTime = 0;
-  private blurWarningCooldown = 5000; // 5 seconds between warnings
+  private blurWarningCooldown = 5000;
 
-  // Helper method for character code conversion
   readonly String = String;
 
   constructor(
     private quizService: QuizService,
+    private aiExamService: AiExamService,
     private authService: AuthService,
     private router: Router
   ) {
-    // Auto-save selected answer when changed
     effect(() => {
       const answers = this.selectedAnswers();
       if (answers.length > 0) {
-        // Could be saved to a backup service
+        // Reserved for future autosave support.
       }
     });
   }
@@ -60,123 +60,61 @@ export class ExamComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
     this.currentUser.set(user);
-    if (!user) {
-      this.router.navigate(['/login']);
-    }
-    // Prevent page reload while exam is in progress
-    window.addEventListener('beforeunload', this.onBeforeUnload.bind(this));
-    
-    // Anti-cheating measures
+
+    // The public landing page already allows direct exam access.
+    // Keep the current behavior while supporting authenticated users.
+    window.addEventListener('beforeunload', this.onBeforeUnload);
     this.setupAntiCheatProtection();
   }
 
   private setupAntiCheatProtection(): void {
-    // Disable right-click context menu
-    document.addEventListener('contextmenu', (e) => {
-      if (this.isStarted()) {
-        e.preventDefault();
-      }
-    });
-
-    // Disable copy/paste
-    document.addEventListener('copy', (e) => {
-      if (this.isStarted()) {
-        e.preventDefault();
-      }
-    });
-
-    document.addEventListener('paste', (e) => {
-      if (this.isStarted()) {
-        e.preventDefault();
-      }
-    });
-
-    // Disable cut
-    document.addEventListener('cut', (e) => {
-      if (this.isStarted()) {
-        e.preventDefault();
-      }
-    });
-
-    // Detect developer tools opening
-    document.addEventListener('keydown', (e) => {
-      if (this.isStarted()) {
-        // F12 - Developer tools
-        if (e.key === 'F12' || e.keyCode === 123) {
-          e.preventDefault();
-        }
-        // Ctrl+Shift+I - Inspector
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') {
-          e.preventDefault();
-        }
-        // Ctrl+Shift+J - Console
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'J') {
-          e.preventDefault();
-        }
-        // Ctrl+Shift+K - Console (alternate)
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'K') {
-          e.preventDefault();
-        }
-        // Ctrl+Shift+C - Element inspector
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
-          e.preventDefault();
-        }
-      }
-    });
-
-    // Detect tab/window blur (switching away from exam)
-    window.addEventListener('blur', () => {
-      if (this.isStarted()) {
-        const now = Date.now();
-        // Only count violations every 5 seconds to avoid spam
-        if (now - this.lastBlurWarningTime > this.blurWarningCooldown) {
-          this.lastBlurWarningTime = now;
-          this.cheatAttempts.update(val => val + 1);
-          
-          // Silent disqualification after 3 violations
-          if (this.cheatAttempts() >= this.maxCheatAttempts) {
-            this.submitQuiz();
-          }
-        }
-      }
-    });
-
-    // Detect fullscreen exit
-    document.addEventListener('fullscreenchange', () => {
-      if (this.isStarted() && !document.fullscreenElement) {
-        this.cheatAttempts.update(val => val + 1);
-        
-        if (this.cheatAttempts() >= this.maxCheatAttempts) {
-          this.submitQuiz();
-        }
-      }
-    });
-
-    // Disable printing
-    window.addEventListener('beforeprint', (e) => {
-      if (this.isStarted()) {
-        e.preventDefault();
-      }
-    });
+    document.addEventListener('contextmenu', this.handleContextMenu);
+    document.addEventListener('copy', this.handleCopy);
+    document.addEventListener('paste', this.handlePaste);
+    document.addEventListener('cut', this.handleCut);
+    document.addEventListener('keydown', this.handleKeyDown);
+    window.addEventListener('blur', this.handleBlur);
+    document.addEventListener('fullscreenchange', this.handleFullscreenChange);
   }
 
-  startQuiz(): void {
+  async startQuiz(): Promise<void> {
     const examType = this.selectedExamType();
-    if (!examType) return;
+    if (!examType || this.isGenerating()) return;
 
     const questionCount = examType === 'small' ? 10 : 60;
     const timeMinutes = examType === 'small' ? 30 : 90;
 
+    this.isGenerating.set(true);
+    this.generationMessage.set('Generating fresh Pearson VUE-style scenarios...');
+
+    let examQuestions: QuizQuestion[];
+
+    try {
+      examQuestions = await this.aiExamService.generateExam(questionCount, examType);
+      this.questionSource.set('ai');
+      this.generationMessage.set('Fresh AI-generated exam ready.');
+    } catch (error) {
+      console.warn('AI exam generation failed. Falling back to local question bank.', error);
+      examQuestions = this.quizService.getShuffledQuestions(questionCount);
+      this.questionSource.set('local');
+      this.generationMessage.set('AI unavailable — using the local question bank.');
+    } finally {
+      this.isGenerating.set(false);
+    }
+
     const attempt = this.quizService.startQuizAttempt(questionCount, timeMinutes);
-    this.questions.set(attempt.questions);
-    this.selectedAnswers.set(new Array(attempt.questions.length).fill(null));
-    this.lockedAnswers.set(new Array(attempt.questions.length).fill(false));
+    attempt.questions = examQuestions;
+    attempt.totalQuestions = examQuestions.length;
+    attempt.userAnswers = new Array(examQuestions.length).fill(null);
+
+    this.questions.set(examQuestions);
+    this.selectedAnswers.set(new Array(examQuestions.length).fill(null));
+    this.lockedAnswers.set(new Array(examQuestions.length).fill(false));
     this.currentQuestion.set(0);
     this.totalTime.set(timeMinutes * 60);
     this.timeRemaining.set(timeMinutes * 60);
     this.isStarted.set(true);
-    
-    // Request fullscreen for anti-cheating
+
     setTimeout(() => {
       const elem = document.documentElement;
       if (elem.requestFullscreen) {
@@ -185,7 +123,7 @@ export class ExamComponent implements OnInit, OnDestroy {
         });
       }
     }, 100);
-    
+
     this.startTimer();
   }
 
@@ -202,13 +140,13 @@ export class ExamComponent implements OnInit, OnDestroy {
   }
 
   selectAnswer(optionIndex: number): void {
-    // Can't change answer if it's locked (Real Exam)
     if (this.selectedExamType() === 'real' && this.lockedAnswers()[this.currentQuestion()]) {
       return;
     }
-    const answers = this.selectedAnswers();
+
+    const answers = [...this.selectedAnswers()];
     answers[this.currentQuestion()] = optionIndex;
-    this.selectedAnswers.set([...answers]);
+    this.selectedAnswers.set(answers);
   }
 
   goToQuestion(index: number): void {
@@ -218,11 +156,10 @@ export class ExamComponent implements OnInit, OnDestroy {
   nextQuestion(): void {
     const next = this.currentQuestion() + 1;
     if (next < this.questions().length) {
-      // Lock current answer when moving to next (Real Exam only)
       if (this.selectedExamType() === 'real') {
-        const locked = this.lockedAnswers();
+        const locked = [...this.lockedAnswers()];
         locked[this.currentQuestion()] = true;
-        this.lockedAnswers.set([...locked]);
+        this.lockedAnswers.set(locked);
       }
       this.currentQuestion.set(next);
     }
@@ -236,11 +173,10 @@ export class ExamComponent implements OnInit, OnDestroy {
   }
 
   goBackToEdit(): void {
-    // Unlock current answer so user can edit
     if (this.selectedExamType() === 'real') {
-      const locked = this.lockedAnswers();
+      const locked = [...this.lockedAnswers()];
       locked[this.currentQuestion()] = false;
-      this.lockedAnswers.set([...locked]);
+      this.lockedAnswers.set(locked);
     }
   }
 
@@ -250,14 +186,12 @@ export class ExamComponent implements OnInit, OnDestroy {
   }
 
   submitQuiz(): void {
-    // Lock all remaining answers
+    if (this.quizCompleted()) return;
+
     if (this.selectedExamType() === 'real') {
-      const locked = this.lockedAnswers();
-      for (let i = 0; i < locked.length; i++) {
-        locked[i] = true;
-      }
-      this.lockedAnswers.set([...locked]);
+      this.lockedAnswers.set(this.lockedAnswers().map(() => true));
     }
+
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
     }
@@ -266,16 +200,18 @@ export class ExamComponent implements OnInit, OnDestroy {
     const timeSpent = totalSeconds - this.timeRemaining();
     const answers = this.selectedAnswers();
 
-    // Submit answers
     answers.forEach((answer, index) => {
       if (answer !== null) {
         this.quizService.submitAnswer(index, answer);
       }
     });
 
-    // Get results
     this.result = this.quizService.completeQuiz(timeSpent);
     this.quizCompleted.set(true);
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => undefined);
+    }
   }
 
   restartQuiz(): void {
@@ -287,28 +223,33 @@ export class ExamComponent implements OnInit, OnDestroy {
     this.selectedAnswers.set([]);
     this.questions.set([]);
     this.result = null;
+    this.generationMessage.set('');
+    this.questionSource.set('local');
   }
 
   selectExamType(type: 'small' | 'real'): void {
     this.selectedExamType.set(type);
     this.examSelected.set(true);
+    this.generationMessage.set('');
   }
 
   goToDashboard(): void {
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(['/']);
   }
 
   exitExam(): void {
-    if (this.isStarted()) {
-      const confirmed = confirm(
-        '⚠️ Are you sure you want to exit? Your progress will be lost and you can retake the exam later.'
-      );
-      if (confirmed) {
-        if (this.timerInterval) {
-          clearInterval(this.timerInterval);
-        }
-        this.router.navigate(['/dashboard']);
+    if (!this.isStarted()) return;
+
+    const confirmed = confirm(
+      '⚠️ Are you sure you want to exit? Your progress will be lost and you can retake the exam later.'
+    );
+
+    if (confirmed) {
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval);
       }
+      this.isStarted.set(false);
+      this.router.navigate(['/']);
     }
   }
 
@@ -321,8 +262,7 @@ export class ExamComponent implements OnInit, OnDestroy {
   getAnswerStatus(index: number): string {
     const answer = this.selectedAnswers()[index];
     if (answer === null) return 'unanswered';
-    if (answer === this.questions()[index].correctAnswer) return 'correct';
-    return 'incorrect';
+    return 'answered';
   }
 
   isAnswered(index: number): boolean {
@@ -344,44 +284,70 @@ export class ExamComponent implements OnInit, OnDestroy {
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
     }
-    // Remove beforeunload listener
-    window.removeEventListener('beforeunload', this.onBeforeUnload.bind(this));
-    
-    // Clean up anti-cheat event listeners when exam is done
+
+    window.removeEventListener('beforeunload', this.onBeforeUnload);
     document.removeEventListener('contextmenu', this.handleContextMenu);
     document.removeEventListener('copy', this.handleCopy);
     document.removeEventListener('paste', this.handlePaste);
     document.removeEventListener('cut', this.handleCut);
+    document.removeEventListener('keydown', this.handleKeyDown);
+    window.removeEventListener('blur', this.handleBlur);
+    document.removeEventListener('fullscreenchange', this.handleFullscreenChange);
   }
 
   private handleContextMenu = (e: Event) => {
-    if (this.isStarted()) {
-      (e as MouseEvent).preventDefault();
-    }
+    if (this.isStarted()) e.preventDefault();
   };
 
   private handleCopy = (e: Event) => {
-    if (this.isStarted()) {
-      (e as ClipboardEvent).preventDefault();
-    }
+    if (this.isStarted()) e.preventDefault();
   };
 
   private handlePaste = (e: Event) => {
-    if (this.isStarted()) {
-      (e as ClipboardEvent).preventDefault();
-    }
+    if (this.isStarted()) e.preventDefault();
   };
 
   private handleCut = (e: Event) => {
-    if (this.isStarted()) {
-      (e as ClipboardEvent).preventDefault();
+    if (this.isStarted()) e.preventDefault();
+  };
+
+  private handleKeyDown = (e: KeyboardEvent) => {
+    if (!this.isStarted()) return;
+
+    if (
+      e.key === 'F12' ||
+      ((e.ctrlKey || e.metaKey) && e.shiftKey && ['I', 'J', 'K', 'C'].includes(e.key.toUpperCase()))
+    ) {
+      e.preventDefault();
     }
   };
 
-  private onBeforeUnload(event: BeforeUnloadEvent): void {
+  private handleBlur = () => {
+    if (!this.isStarted()) return;
+
+    const now = Date.now();
+    if (now - this.lastBlurWarningTime > this.blurWarningCooldown) {
+      this.lastBlurWarningTime = now;
+      this.cheatAttempts.update(val => val + 1);
+      if (this.cheatAttempts() >= this.maxCheatAttempts) {
+        this.submitQuiz();
+      }
+    }
+  };
+
+  private handleFullscreenChange = () => {
+    if (this.isStarted() && !document.fullscreenElement) {
+      this.cheatAttempts.update(val => val + 1);
+      if (this.cheatAttempts() >= this.maxCheatAttempts) {
+        this.submitQuiz();
+      }
+    }
+  };
+
+  private onBeforeUnload = (event: BeforeUnloadEvent): void => {
     if (this.isStarted()) {
       event.preventDefault();
-      event.returnValue = '⚠️ Are you sure you want to leave? Your exam progress will be lost.';
+      event.returnValue = 'Your exam progress will be lost.';
     }
-  }
+  };
 }
