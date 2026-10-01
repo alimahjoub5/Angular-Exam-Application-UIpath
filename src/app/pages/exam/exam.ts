@@ -130,8 +130,10 @@ export class ExamComponent implements OnInit, OnDestroy {
       examQuestions = this.quizService.getShuffledQuestions(questionCount);
       this.questionSource.set('local');
       this.generationStep.set(4);
-      this.generationMessage.set('AI unavailable — the local question bank was loaded instead.');
-      this.notify('warning', 'AI generation was unavailable. A local practice set has been loaded.');
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown AI error';
+      this.generationMessage.set(`AI unavailable: ${errorMessage}`);
+      this.notify('warning', `AI error: ${errorMessage} — local questions loaded instead.`);
     } finally {
       this.stopGenerationStages();
       this.isGenerating.set(false);
