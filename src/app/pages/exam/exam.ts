@@ -30,7 +30,7 @@ export class ExamComponent implements OnInit, OnDestroy {
   result: any = null;
 
   isGenerating = signal(false);
-  questionSource = signal<'ai' | 'local'>('local');
+  questionSource = signal<'ai' | 'hybrid' | 'local'>('local');
   generationMessage = signal('');
   generationStep = signal(0);
   toastMessage = signal('');
@@ -120,11 +120,24 @@ export class ExamComponent implements OnInit, OnDestroy {
     let examQuestions: QuizQuestion[];
 
     try {
-      examQuestions = await this.aiExamService.generateExam(questionCount, examType);
-      this.questionSource.set('ai');
-      this.generationStep.set(4);
-      this.generationMessage.set(`${examQuestions.length} fresh AI-generated questions are ready.`);
-      this.notify('success', `AI questions received — ${examQuestions.length} fresh questions are ready.`);
+      // Economy mode: cap AI generation at 10 questions per exam.
+      const aiQuestionCount = Math.min(questionCount, 10);
+      const aiQuestions = await this.aiExamService.generateExam(aiQuestionCount, examType);
+
+      if (questionCount > aiQuestionCount) {
+        const localQuestions = this.quizService.getShuffledQuestions(questionCount - aiQuestionCount);
+        examQuestions = this.shuffleQuestions([...aiQuestions, ...localQuestions]);
+        this.questionSource.set('hybrid');
+        this.generationStep.set(4);
+        this.generationMessage.set(`${aiQuestionCount} AI + ${questionCount - aiQuestionCount} local questions ready.`);
+        this.notify('success', `Economy mode ready — ${aiQuestionCount} AI questions + ${questionCount - aiQuestionCount} local questions.`);
+      } else {
+        examQuestions = aiQuestions;
+        this.questionSource.set('ai');
+        this.generationStep.set(4);
+        this.generationMessage.set(`${examQuestions.length} fresh AI-generated questions are ready.`);
+        this.notify('success', `AI questions received — ${examQuestions.length} fresh questions are ready.`);
+      }
     } catch (error) {
       console.warn('AI exam generation failed. Falling back to local question bank.', error);
       examQuestions = this.quizService.getShuffledQuestions(questionCount);
@@ -162,6 +175,15 @@ export class ExamComponent implements OnInit, OnDestroy {
     }, 100);
 
     this.startTimer();
+  }
+
+  private shuffleQuestions(items: QuizQuestion[]): QuizQuestion[] {
+    const shuffled = [...items];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
   }
 
   private startTimer(): void {
