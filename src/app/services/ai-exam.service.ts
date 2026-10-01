@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { QuizQuestion } from './quiz.service';
@@ -24,20 +24,33 @@ export class AiExamService {
   }
 
   async generateExam(count: number, mode: 'small' | 'real'): Promise<QuizQuestion[]> {
-    const response = await firstValueFrom(
-      this.http.post<GenerateExamResponse>('/api/generate-exam', {
-        count,
-        mode
-      })
-    );
+    try {
+      const response = await firstValueFrom(
+        this.http.post<GenerateExamResponse>('/api/generate-exam', {
+          count,
+          mode
+        })
+      );
 
-    if (!response.questions?.length) {
-      throw new Error('The AI service returned no questions.');
+      if (!response.questions?.length) {
+        throw new Error('The AI service returned no questions.');
+      }
+
+      return response.questions.map((question, index) => ({
+        ...question,
+        id: question.id ?? Date.now() + index
+      }));
+    } catch (error) {
+      if (error instanceof HttpErrorResponse) {
+        const backendMessage =
+          typeof error.error?.error === 'string'
+            ? error.error.error
+            : error.message;
+
+        throw new Error(backendMessage || 'AI request failed.');
+      }
+
+      throw error;
     }
-
-    return response.questions.map((question, index) => ({
-      ...question,
-      id: question.id ?? Date.now() + index
-    }));
   }
 }
