@@ -13,7 +13,7 @@
         <div class="exam-option" (click)="selectExamType('small')">
           <div class="option-header">
             <span class="option-icon">📋</span>
-            <h2>Small Exam</h2>
+            <h2>AI Practice Sprint</h2>
           </div>
           <div class="option-details">
             <div class="detail-item">
@@ -38,16 +38,16 @@
               </div>
             </div>
           </div>
-          <p class="option-description">Perfect for quick practice and self-assessment</p>
+          <p class="option-description">10 fresh scenario-based questions generated for intensive practice</p>
           <button class="btn btn-primary btn-block">Start Small Exam</button>
         </div>
 
         <!-- Real Exam Option -->
         <div class="exam-option featured" (click)="selectExamType('real')">
-          <div class="featured-badge">Official Exam</div>
+          <div class="featured-badge">Pearson VUE-style Mock</div>
           <div class="option-header">
             <span class="option-icon">🏆</span>
-            <h2>Real Exam</h2>
+            <h2>Full Mock Exam</h2>
           </div>
           <div class="option-details">
             <div class="detail-item">
@@ -72,7 +72,7 @@
               </div>
             </div>
           </div>
-          <p class="option-description">Full certification exam with comprehensive coverage</p>
+          <p class="option-description">60 fresh scenario-based questions designed to simulate certification-level reasoning</p>
           <button class="btn btn-primary btn-block">Start Real Exam</button>
         </div>
       </div>
@@ -90,8 +90,8 @@
     <div class="start-card">
       <div class="exam-header">
         <span class="exam-icon">📝</span>
-        <h1>UiPath Certification Exam</h1>
-        <p>Test your knowledge and prepare for success</p>
+        <h1>UiPath Automation Developer Associate Trainer</h1>
+        <p>Practice with fresh English scenario-based questions at certification-exam difficulty</p>
       </div>
 
       <div class="exam-info">
@@ -106,7 +106,7 @@
           <span class="icon">⏱️</span>
           <div>
             <h3>{{ selectedExamType() === 'small' ? '30 Minutes' : '90 Minutes' }}</h3>
-            <p>{{ selectedExamType() === 'small' ? 'Quick assessment' : 'Full certification exam' }}</p>
+            <p>{{ selectedExamType() === 'small' ? 'Quick assessment' : 'Full mock exam' }}</p>
           </div>
         </div>
         <div class="info-item">
@@ -136,8 +136,11 @@
         </ul>
       </div>
 
-      <button class="btn btn-primary btn-large" (click)="startQuiz()">
-        Start {{ selectedExamType() === 'small' ? 'Small Exam' : 'Real Exam' }}
+      <div *ngIf="generationMessage()" class="generation-status" [class.fallback]="questionSource() === 'local'">
+        {{ generationMessage() }}
+      </div>
+      <button class="btn btn-primary btn-large" (click)="startQuiz()" [disabled]="isGenerating()">
+        {{ isGenerating() ? 'Generating fresh questions...' : ('Start ' + (selectedExamType() === 'small' ? 'AI Practice Sprint' : 'Full Mock Exam')) }}
       </button>
       <button class="btn btn-secondary btn-large" (click)="selectedExamType.set(null); examSelected.set(false)">
         Back to Exam Selection
@@ -150,12 +153,13 @@
     <!-- Anti-Cheating Banner -->
     <div class="anti-cheat-banner">
       <span class="banner-icon">🔒</span>
-      <span class="banner-text">Anti-cheating protection active • Stay in this window • Full screen required</span>
+      <span class="banner-text">Exam simulation active • Stay in this window • Full screen required</span>
     </div>
     <!-- Header -->
     <div class="quiz-header">
       <div class="header-left">
         <h2>Question {{ currentQuestion() + 1 }} of {{ questions().length }}</h2>
+        <span class="question-source">{{ questionSource() === 'ai' ? 'Fresh AI-generated set' : 'Local fallback set' }}</span>
         <div class="progress-bar">
           <div class="progress-fill" [style.width.%]="((currentQuestion() + 1) / questions().length) * 100"></div>
         </div>
