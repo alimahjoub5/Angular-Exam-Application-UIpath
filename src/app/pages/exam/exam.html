@@ -108,6 +108,45 @@
       </div>
 
 
+
+      <section class="topic-training">
+        <div class="topic-training-copy">
+          <span class="study-kicker">TARGETED TRAINING</span>
+          <h2>Train by topic</h2>
+          <p>Choose one certification topic and practice only that area. Use Local Drill for zero AI cost, or Economy AI for just 2 fresh AI questions.</p>
+        </div>
+
+        <div class="topic-training-controls">
+          <label for="training-topic">Topic</label>
+          <select id="training-topic" [value]="selectedTrainingTopic()" (change)="selectTrainingTopic($event)">
+            <option *ngFor="let topic of trainingTopics" [value]="topic">{{ topic }}</option>
+          </select>
+
+          <div class="topic-mode-actions">
+            <button type="button" class="topic-action local-action" (click)="startTopicTraining(false)">
+              <span>🆓</span>
+              <div>
+                <strong>Local Drill</strong>
+                <small>Up to 5 questions · 0 AI tokens</small>
+              </div>
+            </button>
+
+            <button type="button" class="topic-action ai-action" (click)="startTopicTraining(true)" [disabled]="isGenerating()">
+              <span>✨</span>
+              <div>
+                <strong>Economy AI Drill</strong>
+                <small>2 AI + up to 3 local questions</small>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div class="token-tip">
+          <strong>Lowest-cost strategy:</strong>
+          use Local Drill repeatedly, then use Economy AI only when you want fresh scenarios.
+        </div>
+      </section>
+
       <section class="study-center">
         <div class="study-center-header">
           <div>
