@@ -17,6 +17,30 @@ export class ExamComponent implements OnInit, OnDestroy {
 
   examSelected = signal(false);
   selectedExamType = signal<'small' | 'real' | null>(null);
+  selectedTrainingTopic = signal('UI Automation');
+  isTopicTraining = signal(false);
+
+  readonly trainingTopics = [
+    'Business Knowledge',
+    'Platform Knowledge',
+    'Studio Interface',
+    'Variables and Arguments',
+    'Control Flow',
+    'Debugging',
+    'Exception Handling',
+    'Logging',
+    'UI Automation',
+    'Excel Automation',
+    'Email Automation',
+    'PDF Automation',
+    'Data Manipulation',
+    'Version Control Integration',
+    'Libraries and Templates',
+    'Workflow Analyzer',
+    'Orchestrator',
+    'Integration Service',
+    'Document Understanding'
+  ];
 
   isStarted = signal(false);
   currentQuestion = signal(0);
@@ -177,6 +201,74 @@ export class ExamComponent implements OnInit, OnDestroy {
     this.startTimer();
   }
 
+  selectTrainingTopic(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.selectedTrainingTopic.set(value);
+  }
+
+  async startTopicTraining(useAi: boolean): Promise<void> {
+    if (this.isGenerating()) return;
+
+    const topic = this.selectedTrainingTopic();
+    const localPool = this.shuffleQuestions(this.quizService.getQuestionsByTopic(topic));
+    let examQuestions: QuizQuestion[] = [];
+
+    this.isTopicTraining.set(true);
+    this.selectedExamType.set('small');
+
+    if (useAi) {
+      this.isGenerating.set(true);
+      this.generationStep.set(1);
+      this.generationMessage.set(`Creating a low-token ${topic} drill...`);
+      this.startGenerationStages();
+
+      try {
+        const aiQuestions = await this.aiExamService.generateExam(2, 'small', topic);
+        const localQuestions = localPool.slice(0, 3);
+        examQuestions = this.shuffleQuestions([...aiQuestions, ...localQuestions]);
+        this.questionSource.set('hybrid');
+        this.generationStep.set(4);
+        this.generationMessage.set(`Topic drill ready: 2 AI + ${localQuestions.length} local questions.`);
+        this.notify('success', `${topic} drill ready — only 2 AI questions used.`);
+      } catch (error) {
+        examQuestions = localPool.slice(0, 5);
+        this.questionSource.set('local');
+        const errorMessage = error instanceof Error ? error.message : 'Unknown AI error';
+        this.generationMessage.set(`AI unavailable: ${errorMessage}`);
+        this.notify('warning', `AI unavailable — ${topic} local drill loaded with 0 AI tokens.`);
+      } finally {
+        this.stopGenerationStages();
+        this.isGenerating.set(false);
+      }
+    } else {
+      examQuestions = localPool.slice(0, 5);
+      this.questionSource.set('local');
+      this.generationMessage.set(`Local-only ${topic} drill: 0 AI tokens used.`);
+      this.notify('info', `${topic} local drill ready — 0 AI tokens used.`);
+    }
+
+    if (!examQuestions.length) {
+      this.notify('warning', `No local questions found for ${topic}.`);
+      this.isTopicTraining.set(false);
+      return;
+    }
+
+    const timeMinutes = 15;
+    const attempt = this.quizService.startQuizAttempt(examQuestions.length, timeMinutes);
+    attempt.questions = examQuestions;
+    attempt.totalQuestions = examQuestions.length;
+    attempt.userAnswers = new Array(examQuestions.length).fill(null);
+
+    this.questions.set(examQuestions);
+    this.selectedAnswers.set(new Array(examQuestions.length).fill(null));
+    this.lockedAnswers.set(new Array(examQuestions.length).fill(false));
+    this.currentQuestion.set(0);
+    this.totalTime.set(timeMinutes * 60);
+    this.timeRemaining.set(timeMinutes * 60);
+    this.isStarted.set(true);
+    this.startTimer();
+  }
+
   private shuffleQuestions(items: QuizQuestion[]): QuizQuestion[] {
     const shuffled = [...items];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -255,8 +347,7 @@ export class ExamComponent implements OnInit, OnDestroy {
       clearInterval(this.timerInterval);
     }
 
-    const totalSeconds = this.selectedExamType() === 'small' ? 30 * 60 : 90 * 60;
-    const timeSpent = totalSeconds - this.timeRemaining();
+    const timeSpent = this.totalTime() - this.timeRemaining();
     const answers = this.selectedAnswers();
 
     answers.forEach((answer, index) => {
@@ -286,6 +377,7 @@ export class ExamComponent implements OnInit, OnDestroy {
     this.generationStep.set(0);
     this.generationStep.set(0);
     this.questionSource.set('local');
+    this.isTopicTraining.set(false);
     this.showToast.set(false);
   }
 
