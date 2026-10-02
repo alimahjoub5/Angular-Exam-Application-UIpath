@@ -138,10 +138,16 @@ const server = http.createServer(async (req, res) => {
   req.on('end', async () => {
     try {
       const payload = JSON.parse(body || '{}');
-      const count = payload.count === 2 ? 2 : 10;
+      const requestedCount = Number(payload.count);
+      const count = Number.isInteger(requestedCount) && requestedCount >= 1 && requestedCount <= 10
+        ? requestedCount
+        : 10;
       const mode = payload.mode === 'real' ? 'real' : 'small';
       const topic = typeof payload.topic === 'string' ? payload.topic.trim().slice(0, 80) : '';
-      const cacheKey = `${count}:${mode}:${topic || 'mixed'}`;
+      const requestKey = typeof payload.requestKey === 'string'
+        ? payload.requestKey.trim().slice(0, 120)
+        : '';
+      const cacheKey = requestKey || `${count}:${mode}:${topic || 'mixed'}`;
       const cached = examCache.get(cacheKey);
 
       if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) {
