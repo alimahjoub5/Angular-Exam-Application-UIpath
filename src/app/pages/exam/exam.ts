@@ -65,6 +65,7 @@ export class ExamComponent implements OnInit, OnDestroy {
   resumeAvailable = signal(false);
   savedExamLabel = signal('');
   private readonly savedExamKey = 'uipathSavedExamV1';
+  private readonly retryPoolKey = 'uipathAiRetryPoolV1';
   private generationStageTimer: any;
   private toastTimer: any;
 
@@ -152,33 +153,36 @@ export class ExamComponent implements OnInit, OnDestroy {
     let examQuestions: QuizQuestion[];
 
     try {
-      // Economy mode: cap AI generation at 10 questions per exam.
-      const aiQuestionCount = Math.min(questionCount, 10);
-      const aiQuestions = await this.aiExamService.generateExam(aiQuestionCount, examType);
-
-      if (questionCount > aiQuestionCount) {
-        const localQuestions = this.getBalancedLocalQuestions(questionCount - aiQuestionCount);
-        examQuestions = this.shuffleQuestions([...aiQuestions, ...localQuestions]);
-        this.questionSource.set('hybrid');
+      if (examType === 'real') {
+        const retryPool = this.getRetryPool().slice(0, questionCount);
+        const freshCount = Math.max(0, questionCount - retryPool.length);
+        const freshQuestions = await this.generateAiQuestionsInBatches(freshCount, 'real');
+        examQuestions = this.shuffleQuestions([...retryPool, ...freshQuestions]);
+        this.questionSource.set('ai');
         this.generationStep.set(4);
-        this.generationMessage.set(`${aiQuestionCount} AI + ${questionCount - aiQuestionCount} local questions ready.`);
-        this.notify('success', `Economy mode ready — ${aiQuestionCount} AI questions + ${questionCount - aiQuestionCount} local questions.`);
+        this.generationMessage.set(
+          `${retryPool.length} retry questions + ${freshQuestions.length} fresh AI questions ready.`
+        );
+        this.notify(
+          'success',
+          `Full AI mock ready — ${retryPool.length} retry + ${freshQuestions.length} fresh questions.`
+        );
       } else {
-        examQuestions = aiQuestions;
+        examQuestions = await this.generateAiQuestionsInBatches(questionCount, 'small');
         this.questionSource.set('ai');
         this.generationStep.set(4);
         this.generationMessage.set(`${examQuestions.length} fresh AI-generated questions are ready.`);
         this.notify('success', `AI questions received — ${examQuestions.length} fresh questions are ready.`);
       }
     } catch (error) {
-      console.warn('AI exam generation failed. Falling back to local question bank.', error);
-      examQuestions = this.getBalancedLocalQuestions(questionCount);
-      this.questionSource.set('local');
-      this.generationStep.set(4);
+      console.warn('AI exam generation failed.', error);
+      this.stopGenerationStages();
+      this.isGenerating.set(false);
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown AI error';
       this.generationMessage.set(`AI unavailable: ${errorMessage}`);
-      this.notify('warning', `AI error: ${errorMessage} — local questions loaded instead.`);
+      this.notify('warning', `AI generation stopped: ${errorMessage}. No local questions were substituted.`);
+      return;
     } finally {
       this.stopGenerationStages();
       this.isGenerating.set(false);
@@ -277,6 +281,96 @@ export class ExamComponent implements OnInit, OnDestroy {
     this.isStarted.set(true);
     this.saveExamState();
     this.startTimer();
+  }
+
+  private async generateAiQuestionsInBatches(
+    count: number,
+    mode: 'small' | 'real',
+    topic?: string
+  ): Promise<QuizQuestion[]> {
+    if (count <= 0) return [];
+
+    const batchSize = 10;
+    const generated: QuizQuestion[] = [];
+    const generationId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    for (let offset = 0; offset < count; offset += batchSize) {
+      const size = Math.min(batchSize, count - offset);
+      const batchNumber = Math.floor(offset / batchSize) + 1;
+      const totalBatches = Math.ceil(count / batchSize);
+
+      this.generationMessage.set(
+        `Generating fresh AI questions: batch ${batchNumber}/${totalBatches}...`
+      );
+
+      const batch = await this.aiExamService.generateExam(
+        size,
+        mode,
+        topic,
+        `${generationId}-${batchNumber}`
+      );
+
+      generated.push(
+        ...batch.map((question, index) => ({
+          ...question,
+          id: Date.now() + offset + index
+        }))
+      );
+    }
+
+    return generated;
+  }
+
+  private questionKey(question: QuizQuestion): string {
+    return question.question.trim().toLowerCase().replace(/\s+/g, ' ');
+  }
+
+  private getRetryPool(): QuizQuestion[] {
+    try {
+      const raw = localStorage.getItem(this.retryPoolKey);
+      if (!raw) return [];
+
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+
+      const unique = new Map<string, QuizQuestion>();
+      for (const question of parsed as QuizQuestion[]) {
+        if (question?.question && Array.isArray(question.options)) {
+          unique.set(this.questionKey(question), question);
+        }
+      }
+      return Array.from(unique.values());
+    } catch {
+      return [];
+    }
+  }
+
+  private updateRetryPoolAfterFullExam(): void {
+    if (this.selectedExamType() !== 'real' || this.isTopicTraining()) return;
+
+    const currentPool = new Map(
+      this.getRetryPool().map(question => [this.questionKey(question), question])
+    );
+
+    this.questions().forEach((question, index) => {
+      const key = this.questionKey(question);
+      const answer = this.selectedAnswers()[index];
+
+      if (answer === question.correctAnswer) {
+        currentPool.delete(key);
+      } else {
+        currentPool.set(key, question);
+      }
+    });
+
+    localStorage.setItem(
+      this.retryPoolKey,
+      JSON.stringify(Array.from(currentPool.values()))
+    );
+  }
+
+  getRetryPoolSize(): number {
+    return this.getRetryPool().length;
   }
 
   private getBalancedLocalQuestions(count: number): QuizQuestion[] {
@@ -417,6 +511,7 @@ export class ExamComponent implements OnInit, OnDestroy {
     });
 
     this.result = this.quizService.completeQuiz(timeSpent);
+    this.updateRetryPoolAfterFullExam();
     this.quizCompleted.set(true);
     this.isStarted.set(false);
     this.clearSavedExam();
