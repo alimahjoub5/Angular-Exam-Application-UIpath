@@ -7,20 +7,28 @@ const CACHE_TTL_MS = 30 * 60 * 1000;
 const examCache = new Map();
 
 const topics = [
-  'UiPath Studio and project structure',
-  'Variables, arguments and data manipulation',
-  'Control flow and workflow design',
-  'UI Automation, selectors, descriptors and synchronization',
+  'Business and platform fundamentals',
+  'Studio interface and project organization',
+  'Variables and arguments',
+  'Strings, lists, dictionaries and DataTables',
+  'Control flow',
+  'UI Automation synchronization',
+  'UI descriptors and selectors',
   'Object Repository',
-  'Excel, DataTables and file automation',
-  'Debugging and exception handling',
-  'Orchestrator assets, queues, jobs, triggers, folders and robots',
-  'REFramework and transaction processing',
-  'Libraries, templates and package dependencies',
-  'Git and version control',
-  'Workflow Analyzer and testing',
+  'Debugging',
+  'Error and exception handling',
+  'Local files and folders',
+  'Excel automation',
+  'Email automation',
+  'PDF automation',
+  'Logging',
+  'Orchestrator overview and resources',
+  'Queues, assets, jobs, processes and folders',
   'Integration Service',
-  'Document Understanding basics'
+  'Version control integration',
+  'Workflow Analyzer',
+  'RPA testing',
+  'Automation implementation methodology'
 ];
 
 function send(res, status, payload) {
@@ -54,11 +62,16 @@ function buildPrompt(count, mode, topic) {
     ? `Focus ONLY on this topic: ${topic}.`
     : `Topics: ${topics.join('; ')}.`;
 
+  const examStyle = mode === 'real' && !topic
+    ? `This is an A-to-Z full-scope mock sample. Spread questions across different syllabus areas; do not bias toward any weak area. Use realistic workplace situations, troubleshooting, best-next-action, configuration consequences, and close distractors. Aim roughly 10% Easy, 55% Medium, 35% Hard.`
+    : `Use realistic workplace situations, troubleshooting, best-next-action, and close distractors.`;
+
   return `Create exactly ${count} original ENGLISH UiPath Automation Developer Associate practice questions.
 ${scope}
-Use difficult certification-style scenarios, 4 plausible options, exactly 1 correct answer, mostly Medium/Hard. No dumps or copied exam questions.
+${examStyle}
+Use 4 plausible options and exactly 1 best answer. No dumps, recalled questions, or copied exam content.
 Be compact: question <=55 words; option <=14 words; explanation <=28 words; topic <=5 words.
-Mode: ${mode === 'real' ? 'full-mock economy sample' : 'intensive practice'}.`;
+Mode: ${mode === 'real' ? 'full A-to-Z certification mock' : 'intensive practice'}.`;
 }
 
 const questionSchema = {
