@@ -138,7 +138,11 @@ export class ExamComponent implements OnInit, OnDestroy {
 
     this.isGenerating.set(true);
     this.generationStep.set(1);
-    this.generationMessage.set('Connecting to the AI question generator...');
+    this.generationMessage.set(
+      examType === 'real'
+        ? 'Building a balanced A-to-Z certification mock...'
+        : 'Connecting to the AI question generator...'
+    );
     this.startGenerationStages();
 
     let examQuestions: QuizQuestion[];
@@ -149,7 +153,7 @@ export class ExamComponent implements OnInit, OnDestroy {
       const aiQuestions = await this.aiExamService.generateExam(aiQuestionCount, examType);
 
       if (questionCount > aiQuestionCount) {
-        const localQuestions = this.quizService.getShuffledQuestions(questionCount - aiQuestionCount);
+        const localQuestions = this.getBalancedLocalQuestions(questionCount - aiQuestionCount);
         examQuestions = this.shuffleQuestions([...aiQuestions, ...localQuestions]);
         this.questionSource.set('hybrid');
         this.generationStep.set(4);
@@ -164,7 +168,7 @@ export class ExamComponent implements OnInit, OnDestroy {
       }
     } catch (error) {
       console.warn('AI exam generation failed. Falling back to local question bank.', error);
-      examQuestions = this.quizService.getShuffledQuestions(questionCount);
+      examQuestions = this.getBalancedLocalQuestions(questionCount);
       this.questionSource.set('local');
       this.generationStep.set(4);
 
@@ -267,6 +271,48 @@ export class ExamComponent implements OnInit, OnDestroy {
     this.timeRemaining.set(timeMinutes * 60);
     this.isStarted.set(true);
     this.startTimer();
+  }
+
+  private getBalancedLocalQuestions(count: number): QuizQuestion[] {
+    const all = this.quizService.getQuizQuestions();
+    const grouped = new Map<string, QuizQuestion[]>();
+
+    for (const question of all) {
+      const bucket = grouped.get(question.topic) ?? [];
+      bucket.push(question);
+      grouped.set(question.topic, bucket);
+    }
+
+    const topics = Array.from(grouped.keys());
+    const selected: QuizQuestion[] = [];
+    const shuffledBuckets = new Map(
+      topics.map(topic => [topic, this.shuffleQuestions(grouped.get(topic) ?? [])])
+    );
+
+    let cursor = 0;
+    while (selected.length < count && topics.length > 0) {
+      const topic = topics[cursor % topics.length];
+      const bucket = shuffledBuckets.get(topic) ?? [];
+
+      if (bucket.length > 0) {
+        const question = bucket.shift();
+        if (question) selected.push(question);
+      }
+
+      cursor++;
+
+      if (cursor > count * topics.length * 3) {
+        break;
+      }
+    }
+
+    if (selected.length < count) {
+      const usedIds = new Set(selected.map(question => question.id));
+      const remainder = this.shuffleQuestions(all.filter(question => !usedIds.has(question.id)));
+      selected.push(...remainder.slice(0, count - selected.length));
+    }
+
+    return this.shuffleQuestions(selected.slice(0, count));
   }
 
   private shuffleQuestions(items: QuizQuestion[]): QuizQuestion[] {
