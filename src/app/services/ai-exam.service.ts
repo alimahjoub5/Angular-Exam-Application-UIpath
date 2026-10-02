@@ -23,13 +23,14 @@ export class AiExamService {
     return firstValueFrom(this.http.get<AiHealth>('/api/health'));
   }
 
-  async generateExam(count: number, mode: 'small' | 'real', topic?: string): Promise<QuizQuestion[]> {
+  async generateExam(count: number, mode: 'small' | 'real', topic?: string, requestKey?: string): Promise<QuizQuestion[]> {
     try {
       const response = await firstValueFrom(
         this.http.post<GenerateExamResponse>('/api/generate-exam', {
           count,
           mode,
-          topic
+          topic,
+          requestKey
         })
       );
 
