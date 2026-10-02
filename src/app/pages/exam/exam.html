@@ -74,7 +74,7 @@
 
         <!-- Real Exam Option -->
         <div class="exam-option featured" (click)="selectExamType('real')">
-          <div class="featured-badge">Pearson VUE-style Mock</div>
+          <div class="featured-badge">A-to-Z Certification Mock</div>
           <div class="option-header">
             <span class="option-icon">🏆</span>
             <h2>Full Mock Exam</h2>
@@ -102,7 +102,7 @@
               </div>
             </div>
           </div>
-          <p class="option-description">Economy mode: 10 fresh AI scenarios + 50 local questions to minimize token usage</p>
+          <p class="option-description">A-to-Z full-scope mock: balanced coverage across the complete ADA curriculum, using 10 AI scenarios + 50 local questions to keep token use low</p>
           <button class="btn btn-primary btn-block">Start 60-Question Mock</button>
         </div>
       </div>
@@ -383,7 +383,7 @@
             questionSource() === 'ai'
               ? 'AI-generated question set'
               : questionSource() === 'hybrid'
-                ? 'Economy mode: AI + local question set'
+                ? (selectedExamType() === 'real' ? 'A-to-Z balanced mock · AI + local' : 'Economy mode: AI + local question set')
                 : 'Local fallback question set'
           }}
         </span>
