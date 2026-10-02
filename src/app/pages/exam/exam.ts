@@ -62,6 +62,9 @@ export class ExamComponent implements OnInit, OnDestroy {
   showToast = signal(false);
   aiStatus = signal<'checking' | 'connected' | 'not-configured' | 'offline'>('checking');
   aiModel = signal('');
+  resumeAvailable = signal(false);
+  savedExamLabel = signal('');
+  private readonly savedExamKey = 'uipathSavedExamV1';
   private generationStageTimer: any;
   private toastTimer: any;
 
@@ -98,6 +101,7 @@ export class ExamComponent implements OnInit, OnDestroy {
     window.addEventListener('beforeunload', this.onBeforeUnload);
     this.setupAntiCheatProtection();
     this.checkAiConnection();
+    this.refreshResumeState();
   }
 
   async checkAiConnection(): Promise<void> {
@@ -192,6 +196,7 @@ export class ExamComponent implements OnInit, OnDestroy {
     this.totalTime.set(timeMinutes * 60);
     this.timeRemaining.set(timeMinutes * 60);
     this.isStarted.set(true);
+    this.saveExamState();
 
     setTimeout(() => {
       const elem = document.documentElement;
@@ -270,6 +275,7 @@ export class ExamComponent implements OnInit, OnDestroy {
     this.totalTime.set(timeMinutes * 60);
     this.timeRemaining.set(timeMinutes * 60);
     this.isStarted.set(true);
+    this.saveExamState();
     this.startTimer();
   }
 
@@ -331,7 +337,11 @@ export class ExamComponent implements OnInit, OnDestroy {
           this.submitQuiz();
           return 0;
         }
-        return time - 1;
+        const nextTime = time - 1;
+        if (nextTime % 10 === 0) {
+          queueMicrotask(() => this.saveExamState());
+        }
+        return nextTime;
       });
     }, 1000);
   }
@@ -344,10 +354,12 @@ export class ExamComponent implements OnInit, OnDestroy {
     const answers = [...this.selectedAnswers()];
     answers[this.currentQuestion()] = optionIndex;
     this.selectedAnswers.set(answers);
+    this.saveExamState();
   }
 
   goToQuestion(index: number): void {
     this.currentQuestion.set(index);
+    this.saveExamState();
   }
 
   nextQuestion(): void {
@@ -359,6 +371,7 @@ export class ExamComponent implements OnInit, OnDestroy {
         this.lockedAnswers.set(locked);
       }
       this.currentQuestion.set(next);
+      this.saveExamState();
     }
   }
 
@@ -366,6 +379,7 @@ export class ExamComponent implements OnInit, OnDestroy {
     const prev = this.currentQuestion() - 1;
     if (prev >= 0) {
       this.currentQuestion.set(prev);
+      this.saveExamState();
     }
   }
 
@@ -404,6 +418,8 @@ export class ExamComponent implements OnInit, OnDestroy {
 
     this.result = this.quizService.completeQuiz(timeSpent);
     this.quizCompleted.set(true);
+    this.isStarted.set(false);
+    this.clearSavedExam();
 
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => undefined);
@@ -441,16 +457,144 @@ export class ExamComponent implements OnInit, OnDestroy {
     if (!this.isStarted()) return;
 
     const confirmed = confirm(
-      '⚠️ Are you sure you want to exit? Your progress will be lost and you can retake the exam later.'
+      'Exit the exam? Your generated questions, answers, current question, and remaining time will be saved so you can resume without using more AI tokens.'
     );
 
     if (confirmed) {
+      this.saveExamState();
       if (this.timerInterval) {
         clearInterval(this.timerInterval);
       }
       this.isStarted.set(false);
       this.router.navigate(['/']);
     }
+  }
+
+  private saveExamState(): void {
+    if (!this.isStarted() || this.quizCompleted() || !this.questions().length) return;
+
+    const state = {
+      version: 1,
+      questions: this.questions(),
+      answers: this.selectedAnswers(),
+      lockedAnswers: this.lockedAnswers(),
+      currentQuestion: this.currentQuestion(),
+      timeRemaining: this.timeRemaining(),
+      totalTime: this.totalTime(),
+      examType: this.selectedExamType(),
+      questionSource: this.questionSource(),
+      isTopicTraining: this.isTopicTraining(),
+      trainingTopic: this.selectedTrainingTopic(),
+      savedAt: Date.now()
+    };
+
+    localStorage.setItem(this.savedExamKey, JSON.stringify(state));
+    this.refreshResumeState();
+  }
+
+  private refreshResumeState(): void {
+    try {
+      const raw = localStorage.getItem(this.savedExamKey);
+      if (!raw) {
+        this.resumeAvailable.set(false);
+        this.savedExamLabel.set('');
+        return;
+      }
+
+      const state = JSON.parse(raw);
+      if (!Array.isArray(state.questions) || state.questions.length === 0) {
+        this.clearSavedExam();
+        return;
+      }
+
+      this.resumeAvailable.set(true);
+      const answered = Array.isArray(state.answers)
+        ? state.answers.filter((answer: number | null) => answer !== null).length
+        : 0;
+      const mode = state.isTopicTraining
+        ? `${state.trainingTopic || 'Topic'} drill`
+        : state.examType === 'real'
+          ? 'Full mock'
+          : 'Practice sprint';
+      this.savedExamLabel.set(`${mode} · ${answered}/${state.questions.length} answered`);
+    } catch {
+      this.clearSavedExam();
+    }
+  }
+
+  resumeSavedExam(): void {
+    try {
+      const raw = localStorage.getItem(this.savedExamKey);
+      if (!raw) {
+        this.refreshResumeState();
+        return;
+      }
+
+      const state = JSON.parse(raw);
+      const savedQuestions = state.questions as QuizQuestion[];
+      if (!Array.isArray(savedQuestions) || !savedQuestions.length) {
+        this.clearSavedExam();
+        return;
+      }
+
+      const examType: 'small' | 'real' = state.examType === 'real' ? 'real' : 'small';
+      const totalTime = Number(state.totalTime) || (examType === 'real' ? 90 * 60 : 30 * 60);
+      const remaining = Math.max(1, Math.min(Number(state.timeRemaining) || totalTime, totalTime));
+
+      this.selectedExamType.set(examType);
+      this.isTopicTraining.set(Boolean(state.isTopicTraining));
+      if (typeof state.trainingTopic === 'string') {
+        this.selectedTrainingTopic.set(state.trainingTopic);
+      }
+      this.questionSource.set(
+        state.questionSource === 'ai' || state.questionSource === 'hybrid' ? state.questionSource : 'local'
+      );
+
+      const attempt = this.quizService.startQuizAttempt(savedQuestions.length, Math.ceil(totalTime / 60));
+      attempt.questions = savedQuestions;
+      attempt.totalQuestions = savedQuestions.length;
+      attempt.userAnswers = new Array(savedQuestions.length).fill(null);
+
+      this.questions.set(savedQuestions);
+      this.selectedAnswers.set(
+        Array.isArray(state.answers) && state.answers.length === savedQuestions.length
+          ? state.answers
+          : new Array(savedQuestions.length).fill(null)
+      );
+      this.lockedAnswers.set(
+        Array.isArray(state.lockedAnswers) && state.lockedAnswers.length === savedQuestions.length
+          ? state.lockedAnswers
+          : new Array(savedQuestions.length).fill(false)
+      );
+      this.currentQuestion.set(
+        Math.max(0, Math.min(Number(state.currentQuestion) || 0, savedQuestions.length - 1))
+      );
+      this.totalTime.set(totalTime);
+      this.timeRemaining.set(remaining);
+      this.examSelected.set(false);
+      this.quizCompleted.set(false);
+      this.isStarted.set(true);
+
+      this.startTimer();
+      this.notify('success', 'Saved exam restored — no new AI request was made.');
+    } catch (error) {
+      console.warn('Unable to restore saved exam.', error);
+      this.clearSavedExam();
+      this.notify('warning', 'The saved exam could not be restored.');
+    }
+  }
+
+  discardSavedExam(): void {
+    const confirmed = confirm('Delete the saved exam and its generated questions?');
+    if (confirmed) {
+      this.clearSavedExam();
+    }
+  }
+
+  private clearSavedExam(): void {
+    localStorage.removeItem(this.savedExamKey);
+    this.resumeAvailable.set(false);
+    this.savedExamLabel.set('');
   }
 
   private startGenerationStages(): void {
@@ -601,8 +745,9 @@ export class ExamComponent implements OnInit, OnDestroy {
 
   private onBeforeUnload = (event: BeforeUnloadEvent): void => {
     if (this.isStarted()) {
+      this.saveExamState();
       event.preventDefault();
-      event.returnValue = 'Your exam progress will be lost.';
+      event.returnValue = 'Your exam progress has been saved.';
     }
   };
 }
