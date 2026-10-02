@@ -64,8 +64,8 @@ export class ExamComponent implements OnInit, OnDestroy {
   aiModel = signal('');
   resumeAvailable = signal(false);
   savedExamLabel = signal('');
-  private readonly savedExamKey = 'uipathSavedExamV1';
-  private readonly retryPoolKey = 'uipathAiRetryPoolV1';
+  private readonly savedExamKey = 'uipathSavedExamV2';
+  private readonly retryPoolKey = 'uipathAiRetryPoolV2';
   private generationStageTimer: any;
   private toastTimer: any;
 
@@ -100,6 +100,10 @@ export class ExamComponent implements OnInit, OnDestroy {
     // The public landing page already allows direct exam access.
     // Keep the current behavior while supporting authenticated users.
     window.addEventListener('beforeunload', this.onBeforeUnload);
+    // One-time cleanup of legacy question/cache versions.
+    localStorage.removeItem('uipathSavedExamV1');
+    localStorage.removeItem('uipathAiRetryPoolV1');
+
     this.setupAntiCheatProtection();
     this.checkAiConnection();
     this.refreshResumeState();
@@ -219,54 +223,38 @@ export class ExamComponent implements OnInit, OnDestroy {
     this.selectedTrainingTopic.set(value);
   }
 
-  async startTopicTraining(useAi: boolean): Promise<void> {
+  async startTopicTraining(): Promise<void> {
     if (this.isGenerating()) return;
 
     const topic = this.selectedTrainingTopic();
-    const localPool = this.shuffleQuestions(this.quizService.getQuestionsByTopic(topic));
-    let examQuestions: QuizQuestion[] = [];
+    const questionCount = 5;
+    const timeMinutes = 15;
 
     this.isTopicTraining.set(true);
     this.selectedExamType.set('small');
+    this.isGenerating.set(true);
+    this.generationStep.set(1);
+    this.generationMessage.set(`Creating 5 fresh AI questions for ${topic}...`);
+    this.startGenerationStages();
 
-    if (useAi) {
-      this.isGenerating.set(true);
-      this.generationStep.set(1);
-      this.generationMessage.set(`Creating a low-token ${topic} drill...`);
-      this.startGenerationStages();
+    let examQuestions: QuizQuestion[];
 
-      try {
-        const aiQuestions = await this.aiExamService.generateExam(2, 'small', topic);
-        const localQuestions = localPool.slice(0, 3);
-        examQuestions = this.shuffleQuestions([...aiQuestions, ...localQuestions]);
-        this.questionSource.set('hybrid');
-        this.generationStep.set(4);
-        this.generationMessage.set(`Topic drill ready: 2 AI + ${localQuestions.length} local questions.`);
-        this.notify('success', `${topic} drill ready — only 2 AI questions used.`);
-      } catch (error) {
-        examQuestions = localPool.slice(0, 5);
-        this.questionSource.set('local');
-        const errorMessage = error instanceof Error ? error.message : 'Unknown AI error';
-        this.generationMessage.set(`AI unavailable: ${errorMessage}`);
-        this.notify('warning', `AI unavailable — ${topic} local drill loaded with 0 AI tokens.`);
-      } finally {
-        this.stopGenerationStages();
-        this.isGenerating.set(false);
-      }
-    } else {
-      examQuestions = localPool.slice(0, 5);
-      this.questionSource.set('local');
-      this.generationMessage.set(`Local-only ${topic} drill: 0 AI tokens used.`);
-      this.notify('info', `${topic} local drill ready — 0 AI tokens used.`);
-    }
-
-    if (!examQuestions.length) {
-      this.notify('warning', `No local questions found for ${topic}.`);
-      this.isTopicTraining.set(false);
+    try {
+      examQuestions = await this.generateAiQuestionsInBatches(questionCount, 'small', topic);
+      this.questionSource.set('ai');
+      this.generationStep.set(4);
+      this.generationMessage.set(`${examQuestions.length} fresh ${topic} AI questions are ready.`);
+      this.notify('success', `${topic} drill ready — 5 fresh AI questions.`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown AI error';
+      this.generationMessage.set(`AI unavailable: ${errorMessage}`);
+      this.notify('warning', `AI generation stopped: ${errorMessage}`);
       return;
+    } finally {
+      this.stopGenerationStages();
+      this.isGenerating.set(false);
     }
 
-    const timeMinutes = 15;
     const attempt = this.quizService.startQuizAttempt(examQuestions.length, timeMinutes);
     attempt.questions = examQuestions;
     attempt.totalQuestions = examQuestions.length;
@@ -371,48 +359,6 @@ export class ExamComponent implements OnInit, OnDestroy {
 
   getRetryPoolSize(): number {
     return this.getRetryPool().length;
-  }
-
-  private getBalancedLocalQuestions(count: number): QuizQuestion[] {
-    const all = this.quizService.getQuizQuestions();
-    const grouped = new Map<string, QuizQuestion[]>();
-
-    for (const question of all) {
-      const bucket = grouped.get(question.topic) ?? [];
-      bucket.push(question);
-      grouped.set(question.topic, bucket);
-    }
-
-    const topics = Array.from(grouped.keys());
-    const selected: QuizQuestion[] = [];
-    const shuffledBuckets = new Map(
-      topics.map(topic => [topic, this.shuffleQuestions(grouped.get(topic) ?? [])])
-    );
-
-    let cursor = 0;
-    while (selected.length < count && topics.length > 0) {
-      const topic = topics[cursor % topics.length];
-      const bucket = shuffledBuckets.get(topic) ?? [];
-
-      if (bucket.length > 0) {
-        const question = bucket.shift();
-        if (question) selected.push(question);
-      }
-
-      cursor++;
-
-      if (cursor > count * topics.length * 3) {
-        break;
-      }
-    }
-
-    if (selected.length < count) {
-      const usedIds = new Set(selected.map(question => question.id));
-      const remainder = this.shuffleQuestions(all.filter(question => !usedIds.has(question.id)));
-      selected.push(...remainder.slice(0, count - selected.length));
-    }
-
-    return this.shuffleQuestions(selected.slice(0, count));
   }
 
   private shuffleQuestions(items: QuizQuestion[]): QuizQuestion[] {
