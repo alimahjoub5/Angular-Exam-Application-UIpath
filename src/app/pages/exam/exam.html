@@ -17,6 +17,20 @@
         <p>Select the type of exam you want to take</p>
       </div>
 
+
+      <div *ngIf="resumeAvailable()" class="resume-exam-card">
+        <div class="resume-icon">↻</div>
+        <div class="resume-copy">
+          <span class="resume-kicker">SAVED EXAM</span>
+          <strong>Continue without spending more AI tokens</strong>
+          <p>{{ savedExamLabel() }} · The exact generated questions and your progress are stored on this device.</p>
+        </div>
+        <div class="resume-actions">
+          <button type="button" class="resume-primary" (click)="resumeSavedExam()">Resume Exam</button>
+          <button type="button" class="resume-discard" (click)="discardSavedExam()">Discard</button>
+        </div>
+      </div>
+
       <div class="ai-connection-card" [ngClass]="'connection-' + aiStatus()">
         <div class="connection-indicator">
           <span class="connection-dot"></span>
@@ -323,7 +337,7 @@
         <ul>
           <li>You cannot pause the exam once started</li>
           <li>All questions must be answered before submission</li>
-          <li>Your answers are auto-saved as you select them</li>
+          <li>Your generated questions, answers, position, and timer are saved locally so you can resume later</li>
           <li>You can review and change your answers before submitting</li>
           <li>The exam will auto-submit when time expires</li>
         </ul>
