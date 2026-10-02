@@ -1804,3 +1804,97 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Persistent exam / zero-token resume */
+.resume-exam-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  margin: 0 0 1.25rem;
+  padding: 1.1rem;
+  border: 1px solid #bfe8d4;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #f1fbf6 0%, #ffffff 100%);
+  box-shadow: 0 8px 22px rgba(34, 160, 107, 0.08);
+}
+
+.resume-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e4f7ed;
+  color: #168457;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.resume-copy {
+  min-width: 0;
+}
+
+.resume-kicker {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: #168457;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.resume-copy strong {
+  display: block;
+  color: #202020;
+  font-size: 0.96rem;
+}
+
+.resume-copy p {
+  margin: 0.25rem 0 0;
+  color: #666;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.resume-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.resume-primary,
+.resume-discard {
+  border-radius: 9px;
+  padding: 0.65rem 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.resume-primary {
+  border: 0;
+  background: #168457;
+  color: #fff;
+}
+
+.resume-discard {
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #666;
+}
+
+@media (max-width: 720px) {
+  .resume-exam-card {
+    grid-template-columns: auto 1fr;
+  }
+
+  .resume-actions {
+    grid-column: 1 / -1;
+  }
+
+  .resume-primary,
+  .resume-discard {
+    flex: 1;
+  }
+}
