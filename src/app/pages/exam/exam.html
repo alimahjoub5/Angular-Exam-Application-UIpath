@@ -127,7 +127,7 @@
         <div class="topic-training-copy">
           <span class="study-kicker">TARGETED TRAINING</span>
           <h2>Train by topic</h2>
-          <p>Choose one certification topic and practice only that area. Use Local Drill for zero AI cost, or Economy AI for just 2 fresh AI questions.</p>
+          <p>Choose one certification topic and practice only that area with 5 fresh AI-generated questions.</p>
         </div>
 
         <div class="topic-training-controls">
@@ -137,19 +137,11 @@
           </select>
 
           <div class="topic-mode-actions">
-            <button type="button" class="topic-action local-action" (click)="startTopicTraining(false)">
-              <span>🆓</span>
-              <div>
-                <strong>Local Drill</strong>
-                <small>Up to 5 questions · 0 AI tokens</small>
-              </div>
-            </button>
-
-            <button type="button" class="topic-action ai-action" (click)="startTopicTraining(true)" [disabled]="isGenerating()">
+            <button type="button" class="topic-action ai-action" (click)="startTopicTraining()" [disabled]="isGenerating()">
               <span>✨</span>
               <div>
-                <strong>Economy AI Drill</strong>
-                <small>2 AI + up to 3 local questions</small>
+                <strong>Fresh AI Drill</strong>
+                <small>5 new AI-generated questions · no legacy bank</small>
               </div>
             </button>
           </div>
@@ -157,7 +149,7 @@
 
         <div class="token-tip">
           <strong>Lowest-cost strategy:</strong>
-          use Local Drill repeatedly, then use Economy AI only when you want fresh scenarios.
+          all active questions are now AI-generated; legacy local questions have been removed.
         </div>
       </section>
 
