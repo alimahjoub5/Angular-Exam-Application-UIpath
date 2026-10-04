@@ -26,20 +26,24 @@ export class ExamComponent implements OnInit, OnDestroy {
     'Studio Interface',
     'Variables and Arguments',
     'Control Flow',
+    'API-based automation',
     'Debugging',
     'Exception Handling',
     'Logging',
     'UI Automation',
+    'Object Repository',
     'Excel Automation',
     'Email Automation',
     'PDF Automation',
+    'Working with files and folders',
     'Data Manipulation',
     'Version Control Integration',
-    'Libraries and Templates',
+    'Libraries, templates, and snippets',
     'Workflow Analyzer',
+    'RPA Testing',
     'Orchestrator',
     'Integration Service',
-    'Document Understanding'
+    'Implementation Methodology Fundamentals'
   ];
 
   isStarted = signal(false);
