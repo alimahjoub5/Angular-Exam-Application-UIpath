@@ -6,30 +6,199 @@ const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5.6';
 const CACHE_TTL_MS = 30 * 60 * 1000;
 const examCache = new Map();
 
-const topics = [
-  'Business and platform fundamentals',
-  'Studio interface and project organization',
-  'Variables and arguments',
-  'Strings, lists, dictionaries and DataTables',
-  'Control flow',
-  'UI Automation synchronization',
-  'UI descriptors and selectors',
-  'Object Repository',
-  'Debugging',
-  'Error and exception handling',
-  'Local files and folders',
-  'Excel automation',
-  'Email automation',
-  'PDF automation',
-  'Logging',
-  'Orchestrator overview and resources',
-  'Queues, assets, jobs, processes and folders',
-  'Integration Service',
-  'Version control integration',
-  'Workflow Analyzer',
-  'RPA testing',
-  'Automation implementation methodology'
+const officialBlueprint = [
+  {
+    domain: 'Business Knowledge',
+    objectives: [
+      'Describe business process automation and its value',
+      'Identify and describe key concepts related to business processes',
+      'Describe how agentic automation can streamline business processes'
+    ]
+  },
+  {
+    domain: 'Platform Knowledge',
+    objectives: [
+      'High-level use of UiPath products including Studio Types, Robot Types, Orchestrator, and Integration Service',
+      'Difference between Attended and Unattended processes',
+      'Difference between Serverless, VM, and local'
+    ]
+  },
+  {
+    domain: 'Studio Interface',
+    objectives: [
+      'Studio Web overview',
+      'Studio Backstage options',
+      'Create a new process using the correct compatibility mode',
+      'Cross-platform concepts',
+      'Studio capabilities',
+      'Unified Build, Agentic, Apps, and Inter-Process Communication'
+    ]
+  },
+  {
+    domain: 'Variables and Arguments',
+    objectives: [
+      'Data types and their use',
+      'Create, manage, and use variables',
+      'Create, manage, and use In, Out, and In/Out arguments',
+      'Automatically generate variables',
+      'Global constants and global variables',
+      'Differences among variables, arguments, global constants, and global variables'
+    ]
+  },
+  {
+    domain: 'Control Flow',
+    objectives: [
+      'Sequence and Flowchart layouts',
+      'If, Flow Decision, Else If, and the VB.NET If operator',
+      'For Each, While, Do While, and Switch'
+    ]
+  },
+  {
+    domain: 'API-based automation',
+    objectives: [
+      'Official exam section; detailed sub-objectives are not specified in the provided Exam Topics pages'
+    ]
+  },
+  {
+    domain: 'Debugging',
+    objectives: [
+      'Debug modes, debug actions, and debug ribbon options',
+      'Simple and conditional breakpoints',
+      'Simple and conditional tracepoints',
+      'Debugging panels'
+    ]
+  },
+  {
+    domain: 'Exception Handling',
+    objectives: [
+      'Try Catch, Throw, Rethrow, and Retry Scope'
+    ]
+  },
+  {
+    domain: 'Logging',
+    objectives: [
+      'Describe and interpret robot execution logs',
+      'Apply logging best practices during development'
+    ]
+  },
+  {
+    domain: 'UI Automation',
+    objectives: [
+      'Modern and Classic design experiences',
+      'Modern Recorder',
+      'Modern input activities and input methods',
+      'Modern output activities and output methods',
+      'UI synchronization in Modern Design Experience',
+      'Primary target methods: Computer Vision in Unified Target, Fuzzy, Strict, and Image',
+      'Static and dynamic descriptors'
+    ]
+  },
+  {
+    domain: 'Object Repository',
+    objectives: [
+      'Create, publish, and consume a UI Library with static and dynamic descriptors'
+    ]
+  },
+  {
+    domain: 'Excel Automation',
+    objectives: [
+      'Modern Excel Integration activities including Excel Process Scope, For Each Excel Row, Use Excel File, Remove Duplicates, Copy/Paste Range, Insert Column, VLookup, Write Cell, Create Pivot Table, and Insert Chart',
+      'Workbook activities including Read Range Workbook, Write Range Workbook, Get Cell Workbook, Write Cell Workbook, and Append Range Workbook'
+    ]
+  },
+  {
+    domain: 'Email Automation',
+    objectives: [
+      'IMAP and POP3 email retrieval and SMTP sending',
+      'Microsoft and Gmail Integration email activities',
+      'Microsoft 365 and GSuite packages'
+    ]
+  },
+  {
+    domain: 'PDF Automation',
+    objectives: [
+      'Extract data from native and scanned PDFs',
+      'Extract a single piece of data from single and multiple native PDFs'
+    ]
+  },
+  {
+    domain: 'Working with files and folders',
+    objectives: [
+      'Create, manage, and iterate through local files and folders'
+    ]
+  },
+  {
+    domain: 'Data Manipulation',
+    objectives: [
+      'VB.NET string methods including Trim, ToLower, ToUpper, Contains, Format, IndexOf, LastIndexOf, String.Join, Replace, Split, and Substring',
+      'RegEx Builder',
+      'Arrays',
+      'Lists',
+      'Dictionaries',
+      'Build, filter, join, merge, and iterate through DataTables',
+      'Data type conversions',
+      'Text handling and Date handling activities'
+    ]
+  },
+  {
+    domain: 'Version Control Integration',
+    objectives: [
+      'Studio Git integration: add project, clone, commit, push, show changes, solve conflicts, and manage branches'
+    ]
+  },
+  {
+    domain: 'Libraries, templates, and snippets',
+    objectives: [
+      'Create, publish, and consume a process library',
+      'Create, share, and access a template'
+    ]
+  },
+  {
+    domain: 'Workflow Analyzer',
+    objectives: [
+      'Workflow Analysis and Validation at file and project level',
+      'Configure Workflow Analyzer settings'
+    ]
+  },
+  {
+    domain: 'RPA Testing',
+    objectives: [
+      'Basic and data-driven RPA test cases',
+      'Mock Testing',
+      'Test Explorer Panel'
+    ]
+  },
+  {
+    domain: 'Orchestrator',
+    objectives: [
+      'Orchestrator entities: Robot, Folder, Package, Process, Job, Heartbeat',
+      'Tenant entities: User, Machine, License, Webhook, Alerts',
+      'Folder entities: Assets, Storage Buckets, Queues, Triggers, Credential Stores',
+      'Use Tenant and Folder entities',
+      'Provision Robots',
+      'Personal Workspaces',
+      'Roles and Permissions',
+      'Orchestrator Logging',
+      'Unattended Robot Setup'
+    ]
+  },
+  {
+    domain: 'Integration Service',
+    objectives: [
+      'Explain Integration Service',
+      'Use Integration Service Connectors and Triggers in an automation project'
+    ]
+  },
+  {
+    domain: 'Implementation Methodology Fundamentals',
+    objectives: [
+      'Describe project implementation stages',
+      'Interpret Process Design Documents (PDDs) and Solution Design Documents (SDDs)'
+    ]
+  }
 ];
+
+const topics = officialBlueprint.map(section => section.domain);
 
 function send(res, status, payload) {
   res.writeHead(status, {
@@ -58,20 +227,50 @@ function extractOutputText(response) {
 }
 
 function buildPrompt(count, mode, topic) {
-  const scope = topic
-    ? `Focus ONLY on this topic: ${topic}.`
-    : `Topics: ${topics.join('; ')}.`;
+  const selectedBlueprint = topic
+    ? officialBlueprint.filter(section => section.domain.toLowerCase() === topic.toLowerCase())
+    : officialBlueprint;
 
-  const examStyle = mode === 'real' && !topic
-    ? `This is an A-to-Z full-scope mock sample. Spread questions across different syllabus areas; do not bias toward any weak area. Use realistic workplace situations, troubleshooting, best-next-action, configuration consequences, and close distractors. Aim roughly 10% Easy, 55% Medium, 35% Hard.`
-    : `Use realistic workplace situations, troubleshooting, best-next-action, and close distractors.`;
+  const blueprintText = selectedBlueprint
+    .map(section => `- ${section.domain}: ${section.objectives.join('; ')}`)
+    .join('\n');
 
-  return `Create exactly ${count} original ENGLISH UiPath Automation Developer Associate practice questions.
-${scope}
-${examStyle}
-Use 4 plausible options and exactly 1 best answer. No dumps, recalled questions, or copied exam content.
-Be compact: question <=55 words; option <=14 words; explanation <=28 words; topic <=5 words.
-Mode: ${mode === 'real' ? 'full A-to-Z certification mock' : 'intensive practice'}.`;
+  const fullExamRules = mode === 'real' && !topic
+    ? `
+FULL MOCK RULES:
+- Cover the complete official blueprint A-to-Z across the whole 60-question exam; do not bias toward prior weak areas.
+- Each 10-question batch must diversify domains so repeated batches together cover the full blueprint.
+- Favor applied reasoning: realistic workplace scenarios, troubleshooting, best-next-action, configuration consequences, and interpretation.
+- Use close, technically plausible distractors; avoid giveaway wording.
+- Target overall difficulty near certification level: about 10% Easy, 55% Medium, 35% Hard across the full mock.
+`
+    : `
+TOPIC DRILL RULES:
+- Stay within the selected official domain and its listed objectives.
+- Favor applied scenario reasoning over definition recall.
+`;
+
+  return `Create exactly ${count} ORIGINAL ENGLISH practice questions for the UiPath Certified Professional Automation Developer Associate exam.
+
+OFFICIAL SOURCE BASIS:
+UiPath Automation Developer Associate Exam Description, V1.6 January 2026.
+Product coverage: UiPath 2024.10 and later.
+
+OFFICIAL BLUEPRINT:
+${blueprintText}
+${fullExamRules}
+QUESTION RULES:
+- 4 answer options.
+- Exactly 1 best answer.
+- Questions must be original practice content, not official, leaked, recalled, copied, or reconstructed exam questions.
+- Do not introduce topics outside the blueprint above.
+- Keep question <= 70 words.
+- Keep each option <= 18 words.
+- Explanation <= 40 words and state why the correct choice is best.
+- Set topic to the exact official domain name.
+- Do not invent detailed API-based automation objectives beyond what the supplied blueprint supports.
+
+Mode: ${mode === 'real' ? 'full A-to-Z certification mock' : 'official-domain intensive practice'}.`;
 }
 
 const questionSchema = {
