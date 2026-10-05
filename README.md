@@ -1,59 +1,107 @@
-# Exam
+# UiPath Automation Developer Associate Exam Trainer
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.4.
+Angular 22 practice application for the **UiPath Automation Developer Associate** certification.
 
-## Development server
+The app now supports two question sources:
 
-To start a local development server, run:
+- **AI-generated practice exams**: fresh English scenario-based questions generated through the OpenAI Responses API.
+- **Local fallback bank**: the existing question bank is used automatically if the AI API is unavailable.
 
-```bash
-ng serve
+The AI prompt is designed to emphasize realistic troubleshooting, design choices, selectors, Orchestrator, DataTables, exception handling, Object Repository, testing, Workflow Analyzer, Integration Service, REFramework, and other Associate-level topics. It explicitly avoids leaked/recalled exam questions and exam dumps.
+
+## Secure architecture
+
+The browser never receives the OpenAI API key.
+
+Angular calls:
+
+```text
+POST /api/generate-exam
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+The local Node server in `server.mjs` calls OpenAI and returns structured questions to Angular.
 
-## Code scaffolding
+## Setup
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Install dependencies:
 
 ```bash
-ng generate --help
+npm install
 ```
 
-## Building
+Set your OpenAI API key in your shell:
 
-To build the project run:
+macOS / Linux:
 
 ```bash
-ng build
+export OPENAI_API_KEY="your-api-key"
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+PowerShell:
 
-## Running unit tests
+```powershell
+$env:OPENAI_API_KEY="your-api-key"
+```
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+Optional: choose a different model:
 
 ```bash
-ng test
+export OPENAI_MODEL="gpt-5.6"
 ```
 
-## Running end-to-end tests
+## Run locally
 
-For end-to-end (e2e) testing, run:
+Use two terminals.
+
+Terminal 1 — AI API:
 
 ```bash
-ng e2e
+npm run api
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Terminal 2 — Angular:
 
-## Additional Resources
+```bash
+npm start
+```
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Then open:
+
+```text
+http://localhost:4200
+```
+
+The Angular development server proxies `/api` requests to `http://localhost:3000`.
+
+## Exam modes
+
+### AI Practice Sprint
+
+- 10 questions
+- 30 minutes
+- Fresh scenario-based question set
+
+### Full Mock Exam
+
+- 60 questions
+- 90 minutes
+- Broader topic coverage
+- Designed to emphasize certification-style reasoning rather than memorization
+
+## Fallback behavior
+
+If `OPENAI_API_KEY` is missing, OpenAI is unavailable, or question generation fails, the app automatically starts an exam from the existing local question bank instead.
+
+## Build
+
+```bash
+npm run build
+```
+
+## Tests
+
+```bash
+npm test
+```
+
+> This is an independent practice tool. The generated questions are not official UiPath or Pearson VUE exam questions.
